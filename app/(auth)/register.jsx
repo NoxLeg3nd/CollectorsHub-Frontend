@@ -1,7 +1,7 @@
 import {View, Text, TextInput, TouchableOpacity, ImageBackground, ToastAndroid, KeyboardAvoidingView, Animated} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {StatusBar} from 'expo-status-bar';
-import api from "../services/api";
+import api from "../../src/services/api";
 import { useState, useEffect, useRef } from 'react';
 
 export default function Register ({ navigation }) {

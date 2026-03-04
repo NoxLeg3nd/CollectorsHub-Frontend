@@ -2,7 +2,9 @@ import {View, Text, TextInput, TouchableOpacity, ImageBackground, ToastAndroid, 
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useState, useEffect, useRef} from 'react';
 import {StatusBar} from 'expo-status-bar';
-import api from "../services/api";
+import api from "../../src/services/api";
+import { router } from "expo-router";
+
 
 export default function Login({ navigation }) {
     const [username, setUsername] = useState("");
@@ -34,14 +36,11 @@ export default function Login({ navigation }) {
             });
             console.log("Success!", response.data);
             ToastAndroid.show("Welcome to the app!", ToastAndroid.SHORT);
+            router.replace("/(tabs)/home");
         } catch (error) {
             console.log("Error:", error);
             ToastAndroid.show("Username or password is wrong!", ToastAndroid.SHORT);
         }
-    }
-
-    function goToRegister() {
-        navigation.navigate("Register");
     }
 
     return(
@@ -77,7 +76,7 @@ export default function Login({ navigation }) {
                             <TouchableOpacity className="bg-red-500 rounded-xl py-3 px-4 items-center mb-3" onPress={handleLogin}>
                                 <Text className="text-white font-bold text-base">Login</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity className="items-center mb-3" onPress={goToRegister}>
+                            <TouchableOpacity className="items-center mb-3" onPress={() => router.push("/(auth)/register")}>
                                 <Text className="text-white font-thin text-base">Don't have an account?</Text>
                                 <Text className="text-blue-500 font-bold text-base">Register one here!</Text> 
                             </TouchableOpacity>
