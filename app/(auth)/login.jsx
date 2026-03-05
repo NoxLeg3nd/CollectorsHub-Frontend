@@ -4,12 +4,14 @@ import {useState, useEffect, useRef} from 'react';
 import {StatusBar} from 'expo-status-bar';
 import api from "../../src/services/api";
 import { router } from "expo-router";
+import { useUser } from "../../src/context/UserContext";
 
 
 export default function Login({ navigation }) {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
+    const { login } = useUser();
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(-30)).current;
 
@@ -34,7 +36,7 @@ export default function Login({ navigation }) {
             username: username,
             password: password,
             });
-            console.log("Success!", response.data);
+            login(response.data);
             ToastAndroid.show("Welcome to the app!", ToastAndroid.SHORT);
             router.replace("/(tabs)/home");
         } catch (error) {

@@ -48,76 +48,70 @@ export default function Register ({ navigation }) {
         }
     }
 
-    return (
-        <ImageBackground source={require("../../assets/login.jpg")} resizeMode="cover" className="flex-1" style={{ flex: 1 }}>
-            <StatusBar style="light"/>
-                <SafeAreaView className="flex-1">
-                    <KeyboardAvoidingView className="flex-1" behavior="padding" keyboardVerticalOffset={0}>
-                        <View className="flex-1 px-6 justify-center items-center w-full">
-                            <Animated.View 
-                                style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
-                                className="px-6 justify-center w-full bg-black rounded-xl border border-white"
-                            >
-                                <Text className="text-[35px] font-bold text-center text-red-500 flex-wrap pt-5">
-                                    Make a new account!
-                                </Text>
-                                <Text className="text-center text-white m-5 font-bold text-[20px]">
-                                    Please enter your desired credentials to be used for logging in!
-                                </Text>
-                                <View>
-                                    <Text className="text-left text-white font-thin mb-3">
-                                        Email
-                                    </Text>
-                                    <TextInput className="border border-white rounded-xl px-4 py-3 mb-4 text-white" autoCapitalize="none"
-                                    keyboardType="email-address" value={email} onChangeText={setEmail}/>
-                                </View>
-                                <View>
-                                    <Text className="text-left text-white font-thin mb-3">
-                                        Username
-                                    </Text>
-                                    <TextInput className="border border-white rounded-xl px-4 py-3 mb-4 text-white" autoCapitalize="none"
-                                    keyboardType="default" value={username} onChangeText={setUsername}/>
-                                </View>
-                                <View>
-                                    <Text className="text-left text-white font-thin mb-3">
-                                        Password
-                                    </Text>
-                                    <TextInput className="border border-white rounded-xl px-4 py-3 mb-4 text-white" autoCapitalize="none"
-                                    value={password} onChangeText={setPassword} secureTextEntry/>
-                                </View>
-                                <View>
-                                    <Text className="text-left text-white font-thin mb-3">
-                                        Confirm password
-                                    </Text>
-                                    <TextInput
-                                        className={`border rounded-xl px-4 py-3 mb-2 text-white ${
-                                            password2 && password !== password2 ? "border-red-500" : "border-white"
-                                        }`}
-                                        autoCapitalize="none"
-                                        value={password2}
-                                        onChangeText={setPassword2}
-                                        secureTextEntry
-                                    />
-                                    <View style={{ height: 24 }}>
-                                        {password2 && password !== password2 && (
-                                            <Text className="text-red-500 text-sm">
-                                                Passwords do not match!
-                                            </Text>
-                                        )}
-                                        {password2 && password === password2 && (
-                                            <Text className="text-green-500 text-sm">
-                                                Passwords match!
-                                            </Text>
-                                        )}
+    return(
+            <SafeAreaView className="flex-1 bg-black">
+                <StatusBar style="light"/>
+                <ScrollView className="flex-1">
+                    <Text className="text-slate-400 text-[13px] font-bold uppercase mb-2 m-4">Your Stats</Text>
+                        <View className="border border-white rounded-xl mb-4 mx-4">
+                            <View className="flex-row justify-around mx-4 mb-6 my-4">
+                                    <View className="rounded-xl p-4 items-center flex-1 mr-2 bg-neutral-900">
+                                        <Text className="text-red-500 text-[24px] font-extrabold">0</Text>
+                                        <Text className="text-slate-400 text-[13px] mt-1">Products</Text>
                                     </View>
+                                    <View className="rounded-xl p-4 items-center flex-1 bg-neutral-900">
+                                        <Text className="text-red-500 text-[24px] font-extrabold">0</Text>
+                                        <Text className="text-slate-400 text-[13px] mt-1">Listings</Text>
+                                    </View>
+                                    <View className="rounded-xl p-4 items-center flex-1 ml-2 bg-neutral-900">
+                                        <Text className="text-red-500 text-[24px] font-extrabold">0</Text>
+                                        <Text className="text-slate-400 text-[13px] mt-1">Favorites</Text>
+                                    </View>
+                            </View>
+                    </View>
+    
+                    <View className="mx-4 mb-4">
+                        <Text className="text-slate-400 text-[13px] font-bold uppercase mb-2 ml-1">Account Details</Text>
+                        <View className="bg-black rounded-xl border border-white">
+                            <View className="flex-row items-center p-4 border-b border-white">
+                                <Ionicons name="person-outline" size={20} color="#ef4444" />
+                                <View className="ml-3">
+                                    <Text className="text-slate-400 text-[12px]">Username</Text>
+                                    <Text className="text-white text-[16px] font-semibold">Username</Text>
                                 </View>
-                                <TouchableOpacity className="bg-red-500 rounded-xl py-3 px-4 items-center mb-3" onPress={handleRegister}>
-                                    <Text className="text-white font-bold text-base">Register</Text>
-                                </TouchableOpacity>
-                            </Animated.View>
+                            </View>
+                            <View className="flex-row items-center p-4">
+                                <Ionicons name="mail-outline" size={20} color="#ef4444" />
+                                <View className="ml-3">
+                                    <Text className="text-slate-400 text-[12px]">Email</Text>
+                                    <Text className="text-white text-[16px] font-semibold">email@example.com</Text>
+                                </View>
+                            </View>
                         </View>
-                    </KeyboardAvoidingView>
-                </SafeAreaView>
-        </ImageBackground>
-    )
+                    </View>
+    
+                    <View className="mx-4 mb-4">
+                        <Text className="text-slate-400 text-[13px] font-bold uppercase mb-2 ml-1">Actions</Text>
+                        <View className="bg-black rounded-xl border border-white">
+                            <TouchableOpacity className="flex-row items-center p-4 border-b border-white">
+                                <Ionicons name="create-outline" size={20} color="#ef4444" />
+                                <Text className="text-white text-[16px] ml-3">Edit Profile</Text>
+                                <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: 'auto' }} />
+                            </TouchableOpacity>
+                            <TouchableOpacity className="flex-row items-center p-4 border-b border-white">
+                                <Ionicons name="lock-closed-outline" size={20} color="#ef4444" />
+                                <Text className="text-white text-[16px] ml-3">Change Password</Text>
+                                <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: 'auto' }} />
+                            </TouchableOpacity>
+                            <TouchableOpacity className="flex-row items-center p-4">
+                                <Ionicons name="log-out-outline" size={20} color="#ef4444" />
+                                <Text className="text-red-500 text-[16px] ml-3 font-semibold">Logout</Text>
+                                <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: 'auto' }} />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+    
+                </ScrollView>
+            </SafeAreaView>
+        );
 }
