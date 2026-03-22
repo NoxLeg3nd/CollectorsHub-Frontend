@@ -15,7 +15,7 @@ export default function Profile() {
     }
 
     return(
-        <ImageBackground source={require("../../assets/login.jpg")} resizeMode="cover" className="flex-1" style={{ flex: 1 }}>
+        <ImageBackground source={require("../../assets/profile.jpg")} resizeMode="cover" className="flex-1" style={{ flex: 1 }}>
                 <SafeAreaView className="flex-1">
                     <StatusBar style="light"/>
                     <ScrollView className="flex-1">
@@ -62,12 +62,12 @@ export default function Profile() {
                             <View className="mx-4 mb-4 ">
                                 <Text className="text-red-500 text-[13px] font-bold uppercase mb-2 ml-1">Actions</Text>
                                 <View className="rounded-xl border border-white bg-black">
-                                    <TouchableOpacity className="flex-row items-center p-4 border-b border-white">
+                                    <TouchableOpacity className="flex-row items-center p-4 border-b border-white" onPress={() => router.push("/(profile)/editProfile")}>
                                         <Ionicons name="create-outline" size={20} color="#ef4444" />
                                         <Text className="text-white text-[16px] ml-3">Edit Profile</Text>
                                         <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: 'auto' }} />
                                     </TouchableOpacity>
-                                    <TouchableOpacity className="flex-row items-center p-4 border-b border-white">
+                                    <TouchableOpacity className="flex-row items-center p-4 border-b border-white" onPress={() => router.push("/(profile)/editPassword")}>
                                         <Ionicons name="lock-closed-outline" size={20} color="#ef4444" />
                                         <Text className="text-white text-[16px] ml-3">Change Password</Text>
                                         <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: 'auto' }} />

@@ -1,10 +1,11 @@
-import {View, Text, TextInput, TouchableOpacity, ImageBackground, ToastAndroid, KeyboardAvoidingView, Animated} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {StatusBar} from 'expo-status-bar';
-import api from "../../src/services/api";
+import { View, Text, TextInput, TouchableOpacity, ImageBackground, ToastAndroid, KeyboardAvoidingView, Animated, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { useState, useEffect, useRef } from 'react';
+import { router } from "expo-router";
+import api from "../../src/services/api";
 
-export default function Register ({ navigation }) {
+export default function Register() {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -29,89 +30,110 @@ export default function Register ({ navigation }) {
     }, []);
 
     async function handleRegister() {
+        if (!username || !email || !password || !password2) {
+            ToastAndroid.show("Please fill in all fields!", ToastAndroid.SHORT);
+            return;
+        }
+        if (password !== password2) {
+            ToastAndroid.show("Passwords don't match!", ToastAndroid.SHORT);
+            return;
+        }
         try {
-            if(password == password2) {
-                const response = await api.post("api/v1/addUser", {
+            const response = await api.post("api/v1/addUser", {
                 username: username,
                 password: password,
                 email: email,
             });
             console.log("Success!", response.data);
             ToastAndroid.show("Account created! Now login!", ToastAndroid.SHORT);
-            navigation.navigate("Login");
-            } else {
-                ToastAndroid.show("Check your password! They should be the same!", ToastAndroid.SHORT);
-            }
+            router.replace("/(auth)/login");
         } catch (error) {
             console.log("Error:", error);
             ToastAndroid.show("User already exists or fields are empty!", ToastAndroid.SHORT);
         }
     }
 
-    return(
-            <SafeAreaView className="flex-1 bg-black">
-                <StatusBar style="light"/>
-                <ScrollView className="flex-1">
-                    <Text className="text-slate-400 text-[13px] font-bold uppercase mb-2 m-4">Your Stats</Text>
-                        <View className="border border-white rounded-xl mb-4 mx-4">
-                            <View className="flex-row justify-around mx-4 mb-6 my-4">
-                                    <View className="rounded-xl p-4 items-center flex-1 mr-2 bg-neutral-900">
-                                        <Text className="text-red-500 text-[24px] font-extrabold">0</Text>
-                                        <Text className="text-slate-400 text-[13px] mt-1">Products</Text>
-                                    </View>
-                                    <View className="rounded-xl p-4 items-center flex-1 bg-neutral-900">
-                                        <Text className="text-red-500 text-[24px] font-extrabold">0</Text>
-                                        <Text className="text-slate-400 text-[13px] mt-1">Listings</Text>
-                                    </View>
-                                    <View className="rounded-xl p-4 items-center flex-1 ml-2 bg-neutral-900">
-                                        <Text className="text-red-500 text-[24px] font-extrabold">0</Text>
-                                        <Text className="text-slate-400 text-[13px] mt-1">Favorites</Text>
-                                    </View>
-                            </View>
-                    </View>
-    
-                    <View className="mx-4 mb-4">
-                        <Text className="text-slate-400 text-[13px] font-bold uppercase mb-2 ml-1">Account Details</Text>
-                        <View className="bg-black rounded-xl border border-white">
-                            <View className="flex-row items-center p-4 border-b border-white">
-                                <Ionicons name="person-outline" size={20} color="#ef4444" />
-                                <View className="ml-3">
-                                    <Text className="text-slate-400 text-[12px]">Username</Text>
-                                    <Text className="text-white text-[16px] font-semibold">Username</Text>
+    return (
+        <ImageBackground source={require("../../assets/login.jpg")} resizeMode="cover" className="flex-1"
+                         style={{flex: 1}}>
+            <StatusBar style="light"/>
+            <KeyboardAvoidingView className="flex-1" behavior="padding" keyboardVerticalOffset={0}>
+                <SafeAreaView className="flex-1">
+                    <ScrollView contentContainerStyle={{flexGrow: 1}} keyboardShouldPersistTaps="handled">
+                        <View className="flex-1 px-6 justify-center items-center w-full py-10">
+                            <Animated.View
+                                style={{opacity: fadeAnim, transform: [{translateY: slideAnim}]}}
+                                className="px-6 justify-center w-full bg-black rounded-xl border border-white"
+                            >
+                                <Text className="text-[35px] font-bold text-center text-red-500 flex-wrap pt-5">
+                                    Join CollectorsHub!
+                                </Text>
+                                <Text className="text-center text-white m-5 font-bold text-[20px]">
+                                    Create your account below!
+                                </Text>
+
+                                <View>
+                                    <Text className="text-left text-white font-thin mb-3">Username</Text>
+                                    <TextInput
+                                        className="border border-white rounded-xl px-4 py-3 mb-4 text-white"
+                                        autoCapitalize="none"
+                                        value={username}
+                                        onChangeText={setUsername}
+                                    />
                                 </View>
-                            </View>
-                            <View className="flex-row items-center p-4">
-                                <Ionicons name="mail-outline" size={20} color="#ef4444" />
-                                <View className="ml-3">
-                                    <Text className="text-slate-400 text-[12px]">Email</Text>
-                                    <Text className="text-white text-[16px] font-semibold">email@example.com</Text>
+
+                                <View>
+                                    <Text className="text-left text-white font-thin mb-3">Email</Text>
+                                    <TextInput
+                                        className="border border-white rounded-xl px-4 py-3 mb-4 text-white"
+                                        autoCapitalize="none"
+                                        keyboardType="email-address"
+                                        autoComplete="email"
+                                        value={email}
+                                        onChangeText={setEmail}
+                                    />
                                 </View>
-                            </View>
+
+                                <View>
+                                    <Text className="text-left text-white font-thin mb-3">Password</Text>
+                                    <TextInput
+                                        className="border border-white rounded-xl px-4 py-3 mb-4 text-white"
+                                        autoCapitalize="none"
+                                        autoComplete="password-new"
+                                        value={password}
+                                        onChangeText={setPassword}
+                                        secureTextEntry
+                                    />
+                                </View>
+
+                                <View>
+                                    <Text className="text-left text-white font-thin mb-3">Confirm Password</Text>
+                                    <TextInput
+                                        className="border border-white rounded-xl px-4 py-3 mb-4 text-white"
+                                        autoCapitalize="none"
+                                        autoComplete="password-new"
+                                        value={password2}
+                                        onChangeText={setPassword2}
+                                        secureTextEntry
+                                    />
+                                </View>
+
+                                <TouchableOpacity className="bg-red-500 rounded-xl py-3 px-4 items-center mb-3"
+                                                  onPress={handleRegister}>
+                                    <Text className="text-white font-bold text-base">Create Account</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity className="items-center mb-5"
+                                                  onPress={() => router.replace("/(auth)/login")}>
+                                    <Text className="text-white font-thin text-base">Already have an account?</Text>
+                                    <Text className="text-blue-500 font-bold text-base">Sign in here!</Text>
+                                </TouchableOpacity>
+
+                            </Animated.View>
                         </View>
-                    </View>
-    
-                    <View className="mx-4 mb-4">
-                        <Text className="text-slate-400 text-[13px] font-bold uppercase mb-2 ml-1">Actions</Text>
-                        <View className="bg-black rounded-xl border border-white">
-                            <TouchableOpacity className="flex-row items-center p-4 border-b border-white">
-                                <Ionicons name="create-outline" size={20} color="#ef4444" />
-                                <Text className="text-white text-[16px] ml-3">Edit Profile</Text>
-                                <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: 'auto' }} />
-                            </TouchableOpacity>
-                            <TouchableOpacity className="flex-row items-center p-4 border-b border-white">
-                                <Ionicons name="lock-closed-outline" size={20} color="#ef4444" />
-                                <Text className="text-white text-[16px] ml-3">Change Password</Text>
-                                <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: 'auto' }} />
-                            </TouchableOpacity>
-                            <TouchableOpacity className="flex-row items-center p-4">
-                                <Ionicons name="log-out-outline" size={20} color="#ef4444" />
-                                <Text className="text-red-500 text-[16px] ml-3 font-semibold">Logout</Text>
-                                <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: 'auto' }} />
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-    
-                </ScrollView>
-            </SafeAreaView>
-        );
+                    </ScrollView>
+                </SafeAreaView>
+            </KeyboardAvoidingView>
+        </ImageBackground>
+    );
 }
