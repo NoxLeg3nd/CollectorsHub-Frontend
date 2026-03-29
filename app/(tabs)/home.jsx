@@ -27,7 +27,7 @@ function ProductCard({ item, onPress }) {
             {item.image ? (
                 <Image
                     source={{ uri: item.image }}
-                    className="w-full h-32"
+                    style={{ width: "100%", height: 128 }}
                     resizeMode="cover"
                 />
             ) : (
@@ -75,13 +75,15 @@ export default function Home() {
     const { user } = useUser();
 
     const [products, setProducts] = useState([]);
-    const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
     const [totalItems, setTotalItems] = useState(0);
+    const [listKey, setListKey] = useState(0);
+
     const loadingRef = useRef(false);
+    const pageRef = useRef(0);
 
     const fetchProducts = useCallback(
         async (pageToFetch, reset = false) => {
@@ -103,9 +105,19 @@ export default function Home() {
 
                 const { content, last, totalElements } = response.data;
 
-                setProducts((prev) => (reset ? content : [...prev, ...content]));
+                setProducts((prev) => {
+                    const combined = reset ? content : [...prev, ...content];
+                    const seen = new Set();
+                    return combined.filter((item) => {
+                        if (seen.has(item.id)) return false;
+                        seen.add(item.id);
+                        return true;
+                    });
+                });
+
                 setHasMore(!last);
-                setPage(pageToFetch + 1);
+                pageRef.current = pageToFetch + 1;
+
                 if (reset) setTotalItems(totalElements ?? 0);
             } catch (err) {
                 console.error("Failed to fetch products:", err);
@@ -120,8 +132,9 @@ export default function Home() {
 
     useFocusEffect(
         useCallback(() => {
-            setProducts([]);
-            setPage(0);
+            loadingRef.current = false;
+            pageRef.current = 0;
+            setListKey((k) => k + 1);
             setHasMore(true);
             fetchProducts(0, true);
         }, [user?.id])
@@ -129,7 +142,9 @@ export default function Home() {
 
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
-        setPage(0);
+        loadingRef.current = false;
+        pageRef.current = 0;
+        setListKey((k) => k + 1);
         setHasMore(true);
         await fetchProducts(0, true);
         setRefreshing(false);
@@ -137,9 +152,9 @@ export default function Home() {
 
     const handleLoadMore = useCallback(() => {
         if (hasMore && !loadingRef.current) {
-            fetchProducts(page);
+            fetchProducts(pageRef.current);
         }
-    }, [hasMore, page, fetchProducts]);
+    }, [hasMore, fetchProducts]);
 
     const renderItem = useCallback(
         ({ item }) => (
@@ -183,6 +198,7 @@ export default function Home() {
     return (
         <SafeAreaView className="flex-1 bg-black">
             <StatusBar style="light" />
+
             <View className="flex-row items-center justify-between px-4 pt-2 pb-4 border-b border-white">
                 <View>
                     <Text className="text-red-500 text-[13px] font-bold uppercase">
@@ -209,8 +225,9 @@ export default function Home() {
 
             <View className="flex-1">
                 <FlatList
+                    key={listKey}
                     data={products}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item) => String(item.id)}
                     renderItem={renderItem}
                     numColumns={2}
                     contentContainerStyle={{

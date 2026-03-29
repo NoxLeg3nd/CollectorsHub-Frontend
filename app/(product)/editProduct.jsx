@@ -7,13 +7,16 @@ import {
     ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
+    Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, router } from "expo-router";
 import { useEffect, useState } from "react";
+import * as ImagePicker from "expo-image-picker";
 import api from "../../src/services/api";
+import { uploadImageToCloudinary } from "../../src/services/cloudinary";
 
 function InputField({ label, icon, value, onChangeText, placeholder, keyboardType = "default", multiline = false }) {
     return (
@@ -49,6 +52,7 @@ export default function EditProduct() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [error, setError] = useState(null);
 
     const [name, setName] = useState("");
@@ -57,6 +61,8 @@ export default function EditProduct() {
     const [manufactureYear, setManufactureYear] = useState("");
     const [description, setDescription] = useState("");
     const [image, setImage] = useState("");
+
+    const [localImageUri, setLocalImageUri] = useState(null);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -83,12 +89,47 @@ export default function EditProduct() {
         if (id) fetchProduct();
     }, [id]);
 
+    async function pickImage() {
+        if (Platform.OS !== "web") {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== "granted") {
+                setError("Gallery permission is required to pick a photo.");
+                return;
+            }
+        }
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ["images"],
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.85,
+        });
+        if (!result.canceled && result.assets?.length > 0) {
+            const uri = result.assets[0].uri;
+            setLocalImageUri(uri);
+            setUploading(true);
+            try {
+                const url = await uploadImageToCloudinary(uri);
+                setImage(url);
+            } catch (err) {
+                console.error("Upload error:", err);
+                setError("Image upload failed. The previous image will be kept.");
+                setLocalImageUri(null);
+            } finally {
+                setUploading(false);
+            }
+        }
+    }
+
+    function removeImage() {
+        setLocalImageUri(null);
+        setImage("");
+    }
+
     const handleSave = async () => {
         if (!name.trim()) {
             setError("Product name is required.");
             return;
         }
-
         try {
             setSaving(true);
             setError(null);
@@ -166,7 +207,7 @@ export default function EditProduct() {
                 </TouchableOpacity>
                 <TouchableOpacity
                     onPress={handleSave}
-                    disabled={saving}
+                    disabled={saving || uploading}
                     className="ml-2 flex-row items-center bg-red-500 border border-white rounded-lg px-3 py-1.5"
                 >
                     {saving ? (
@@ -237,13 +278,74 @@ export default function EditProduct() {
                             placeholder="e.g. 2023"
                             keyboardType="numeric"
                         />
-                        <InputField
-                            label="Image URL"
-                            icon="image-outline"
-                            value={image}
-                            onChangeText={setImage}
-                            placeholder="https://..."
-                        />
+
+                        <View className="mx-4 mt-3 mb-1">
+                            <View className="flex-row items-center mb-1.5">
+                                <Ionicons name="image-outline" size={13} color="#ef4444" />
+                                <Text className="text-red-500 text-[13px] font-semibold ml-1 uppercase tracking-widest">
+                                    Photo
+                                </Text>
+                            </View>
+
+                            {(localImageUri || image) ? (
+                                <View className="rounded-xl overflow-hidden border border-white">
+                                    <Image
+                                        source={{ uri: localImageUri ?? image }}
+                                        style={{ width: "100%", height: 180 }}
+                                        resizeMode="cover"
+                                    />
+
+                                    {uploading && (
+                                        <View
+                                            style={{
+                                                position: "absolute",
+                                                inset: 0,
+                                                backgroundColor: "rgba(0,0,0,0.65)",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                            }}
+                                        >
+                                            <ActivityIndicator color="#ef4444" size="large" />
+                                            <Text className="text-white font-bold text-base mt-3">
+                                                Uploading…
+                                            </Text>
+                                        </View>
+                                    )}
+
+                                    {!uploading && (
+                                        <View className="absolute top-2 right-2 flex-row" style={{ gap: 6 }}>
+                                            <TouchableOpacity
+                                                onPress={pickImage}
+                                                className="bg-black/70 border border-white rounded-full px-2 py-1 flex-row items-center"
+                                            >
+                                                <Ionicons name="refresh-outline" size={13} color="#fff" />
+                                                <Text className="text-white text-[11px] ml-1">Change</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                onPress={removeImage}
+                                                className="bg-black/70 border border-white rounded-full p-1.5"
+                                            >
+                                                <Ionicons name="close" size={13} color="#fff" />
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
+                                </View>
+                            ) : (
+                                <TouchableOpacity
+                                    onPress={pickImage}
+                                    className="border border-white rounded-xl items-center justify-center py-8 bg-zinc-900"
+                                >
+                                    <Ionicons name="image-outline" size={36} color="#ef4444" />
+                                    <Text className="text-white text-[13px] mt-2 font-semibold">
+                                        Choose from Gallery
+                                    </Text>
+                                    <Text className="text-slate-500 text-[11px] mt-1">
+                                        Replace the current image
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+
                         <InputField
                             label="Description"
                             icon="document-text-outline"
