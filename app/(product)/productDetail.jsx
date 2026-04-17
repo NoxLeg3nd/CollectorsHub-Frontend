@@ -32,30 +32,33 @@ function DetailRow({ icon, label, value }) {
 
 export default function ProductDetail() {
     const { id } = useLocalSearchParams();
+
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const fetchProduct = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await api.get("/api/v1/getProductById", {
+                params: { id },
+            });
+
+            setProduct(response.data);
+        } catch (err) {
+            console.error("Failed to fetch product:", err);
+            setError("Could not load product details. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    }, [id]);
+
     useFocusEffect(
         useCallback(() => {
-            const fetchProduct = async () => {
-                try {
-                    setLoading(true);
-                    setError(null);
-                    const response = await api.get("/api/v1/getProductById", {
-                        params: { id },
-                    });
-                    setProduct(response.data);
-                } catch (err) {
-                    console.error("Failed to fetch product:", err);
-                    setError("Could not load product details. Please try again.");
-                } finally {
-                    setLoading(false);
-                }
-            };
-
             if (id) fetchProduct();
-        }, [id])
+        }, [id, fetchProduct])
     );
 
     return (
@@ -63,24 +66,19 @@ export default function ProductDetail() {
             <StatusBar style="light" />
 
             <View className="flex-row items-center px-4 pt-2 pb-4 border-b border-white">
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    className="mr-3"
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
+                <TouchableOpacity onPress={() => router.back()} className="mr-3">
                     <Ionicons name="arrow-back" size={22} color="#fff" />
                 </TouchableOpacity>
+
                 <View className="flex-1">
                     <Text className="text-red-500 text-[13px] font-bold uppercase">
                         Item Details
                     </Text>
-                    <Text
-                        className="text-white text-[22px] font-extrabold"
-                        numberOfLines={1}
-                    >
+                    <Text className="text-white text-[22px] font-extrabold" numberOfLines={1}>
                         {product?.name ?? "Loading..."}
                     </Text>
                 </View>
+
                 {product && !loading && (
                     <TouchableOpacity
                         onPress={() =>
@@ -108,23 +106,19 @@ export default function ProductDetail() {
             {error && !loading && (
                 <View className="mx-4 mt-3 p-3 bg-red-500/20 border border-red-500 rounded-xl flex-row items-center">
                     <Ionicons name="alert-circle-outline" size={18} color="#ef4444" />
-                    <Text className="text-red-400 text-[13px] ml-2 flex-1">{error}</Text>
-                    <TouchableOpacity
-                        onPress={() => {
-                            setLoading(true);
-                            setError(null);
-                        }}
-                    >
-                        <Text className="text-white text-[12px] font-bold">Retry</Text>
+                    <Text className="text-red-400 text-[13px] ml-2 flex-1">
+                        {error}
+                    </Text>
+                    <TouchableOpacity onPress={fetchProduct}>
+                        <Text className="text-white text-[12px] font-bold">
+                            Retry
+                        </Text>
                     </TouchableOpacity>
                 </View>
             )}
 
             {product && !loading && (
-                <ScrollView
-                    contentContainerStyle={{ paddingBottom: 40 }}
-                    showsVerticalScrollIndicator={false}
-                >
+                <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
                     {product.image ? (
                         <Image
                             source={{ uri: product.image }}
@@ -138,40 +132,39 @@ export default function ProductDetail() {
                     )}
 
                     <View className="mx-4 mt-3 bg-zinc-900 border border-white rounded-xl px-2">
-                        <DetailRow
-                            icon="library-outline"
-                            label="Collection"
-                            value={product.collection}
-                        />
-                        <DetailRow
-                            icon="calendar-outline"
-                            label="Manufacture Year"
-                            value={product.manufactureYear?.toString()}
-                        />
-                        <DetailRow
-                            icon="pricetag-outline"
-                            label="Category"
-                            value={product.category}
-                        />
+                        <DetailRow icon="library-outline" label="Collection" value={product.collection} />
+                        <DetailRow icon="calendar-outline" label="Manufacture Year" value={product.manufactureYear?.toString()} />
+                        <DetailRow icon="pricetag-outline" label="Category" value={product.category} />
                     </View>
 
                     {product.description && (
                         <View className="mx-4 mt-3 bg-zinc-900 border border-white rounded-xl p-4">
-                            <View className="flex-row items-center mb-2">
-                                <Ionicons
-                                    name="document-text-outline"
-                                    size={13}
-                                    color="#ef4444"
-                                />
-                                <Text className="text-red-500 text-[13px] font-semibold ml-1">
-                                    Description
-                                </Text>
-                            </View>
+                            <Text className="text-red-500 text-[13px] font-semibold mb-2">
+                                Description
+                            </Text>
                             <Text className="text-slate-400 text-[13px] leading-5">
                                 {product.description}
                             </Text>
                         </View>
                     )}
+
+                    <TouchableOpacity
+                        onPress={() =>
+                            router.push({
+                                pathname: "/(listings)/addListings",
+                                params: {
+                                    productId: product.id,
+                                    productName: product.name,
+                                },
+                            })
+                        }
+                        className="mx-4 mt-6 bg-red-500 border border-white rounded-xl py-4 flex-row items-center justify-center"
+                    >
+                        <Ionicons name="storefront-outline" size={20} color="#fff" />
+                        <Text className="text-white text-[16px] font-extrabold ml-2">
+                            Sell This Item
+                        </Text>
+                    </TouchableOpacity>
                 </ScrollView>
             )}
         </SafeAreaView>
