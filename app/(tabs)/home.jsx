@@ -36,10 +36,7 @@ function ProductCard({ item, onPress }) {
                 </View>
             )}
             <View className="p-3">
-                <Text
-                    className="text-white font-bold text-[14px]"
-                    numberOfLines={1}
-                >
+                <Text className="text-white font-bold text-[14px]" numberOfLines={1}>
                     {item.name}
                 </Text>
                 <View className="flex-row items-center mt-1">
@@ -60,10 +57,7 @@ function ProductCard({ item, onPress }) {
                         {item.manufactureYear}
                     </Text>
                 </View>
-                <Text
-                    className="text-slate-500 text-[11px] mt-2"
-                    numberOfLines={2}
-                >
+                <Text className="text-slate-500 text-[11px] mt-2" numberOfLines={2}>
                     {item.description}
                 </Text>
             </View>
@@ -89,22 +83,14 @@ export default function Home() {
         async (pageToFetch, reset = false) => {
             if (!user?.id) return;
             if (loadingRef.current) return;
-
             loadingRef.current = true;
             setLoading(true);
             setError(null);
-
             try {
                 const response = await api.get("/api/v1/getAllProductsByUserId", {
-                    params: {
-                        userId: user.id,
-                        page: pageToFetch,
-                        size: PAGE_SIZE,
-                    },
+                    params: { userId: user.id, page: pageToFetch, size: PAGE_SIZE },
                 });
-
                 const { content, last, totalElements } = response.data;
-
                 setProducts((prev) => {
                     const combined = reset ? content : [...prev, ...content];
                     const seen = new Set();
@@ -114,10 +100,8 @@ export default function Home() {
                         return true;
                     });
                 });
-
                 setHasMore(!last);
                 pageRef.current = pageToFetch + 1;
-
                 if (reset) setTotalItems(totalElements ?? 0);
             } catch (err) {
                 console.error("Failed to fetch products:", err);
@@ -151,9 +135,7 @@ export default function Home() {
     }, [fetchProducts]);
 
     const handleLoadMore = useCallback(() => {
-        if (hasMore && !loadingRef.current) {
-            fetchProducts(pageRef.current);
-        }
+        if (hasMore && !loadingRef.current) fetchProducts(pageRef.current);
     }, [hasMore, fetchProducts]);
 
     const renderItem = useCallback(
@@ -161,10 +143,7 @@ export default function Home() {
             <ProductCard
                 item={item}
                 onPress={() =>
-                    router.push({
-                        pathname: "/(product)/productDetail",
-                        params: { id: item.id },
-                    })
+                    router.push({ pathname: "/(product)/productDetail", params: { id: item.id } })
                 }
             />
         ),
@@ -185,12 +164,8 @@ export default function Home() {
         return (
             <View className="flex-1 items-center justify-center mt-20 px-6">
                 <Ionicons name="cube-outline" size={64} color="#ef4444" />
-                <Text className="text-white text-xl font-bold mt-4 text-center">
-                    No items yet
-                </Text>
-                <Text className="text-slate-400 text-sm mt-2 text-center">
-                    Your collection is empty. Start adding products!
-                </Text>
+                <Text className="text-white text-xl font-bold mt-4 text-center">No items yet</Text>
+                <Text className="text-slate-400 text-sm mt-2 text-center">Your collection is empty. Start adding products!</Text>
             </View>
         );
     };
@@ -201,9 +176,7 @@ export default function Home() {
 
             <View className="flex-row items-center justify-between px-4 pt-2 pb-4 border-b border-white">
                 <View>
-                    <Text className="text-red-500 text-[13px] font-bold uppercase">
-                        My Collection
-                    </Text>
+                    <Text className="text-red-500 text-[13px] font-bold uppercase">My Collection</Text>
                     <Text className="text-white text-[22px] font-extrabold">
                         {user?.username ?? "Collector"}
                     </Text>
@@ -211,6 +184,12 @@ export default function Home() {
                         {totalItems} {totalItems === 1 ? "item" : "items"} in your collection
                     </Text>
                 </View>
+                <TouchableOpacity
+                    onPress={() => router.push("/(product)/searchProducts")}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                    <Ionicons name="search-outline" size={24} color="#ef4444" />
+                </TouchableOpacity>
             </View>
 
             {error && (

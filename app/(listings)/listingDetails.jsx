@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Linking,
+    Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -39,6 +40,7 @@ export default function ListingDetails() {
     const [listing, setListing] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [reviewStats, setReviewStats] = useState(null);
 
     const fetchListing = useCallback(async () => {
         try {
@@ -48,8 +50,15 @@ export default function ListingDetails() {
             const response = await api.get("/api/v1/getListingById", {
                 params: { id },
             });
-
             setListing(response.data);
+
+            try {
+                const statsRes = await api.get("/api/v1/getReviewStats", {
+                    params: { userId: response.data.userId },
+                });
+                setReviewStats(statsRes.data);
+            } catch (_) {}
+
         } catch (err) {
             console.error("Failed to fetch listing:", err);
             setError("Could not load listing details. Please try again.");
@@ -84,6 +93,37 @@ export default function ListingDetails() {
         Linking.openURL(url);
     };
 
+    function handleDelete() {
+        Alert.alert(
+            "Delete Listing",
+            "Are you sure you want to delete this listing? Your product will remain in your collection.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await api.delete("/api/v1/removeListing", {
+                                params: { id: listing.id },
+                            });
+                            router.back();
+                        } catch (err) {
+                            console.error("Delete listing error:", err);
+                            Alert.alert("Error", "Failed to delete listing. Please try again.");
+                        }
+                    },
+                },
+            ]
+        );
+    }
+
+    function getScoreColor(percentage) {
+        if (percentage >= 70) return "#22c55e";
+        if (percentage >= 40) return "#f59e0b";
+        return "#ef4444";
+    }
+
     return (
         <SafeAreaView className="flex-1 bg-black">
             <StatusBar style="light" />
@@ -101,10 +141,7 @@ export default function ListingDetails() {
                     <Text className="text-red-500 text-[13px] font-bold uppercase">
                         Listing Details
                     </Text>
-                    <Text
-                        className="text-white text-[22px] font-extrabold"
-                        numberOfLines={1}
-                    >
+                    <Text className="text-white text-[22px] font-extrabold" numberOfLines={1}>
                         {product?.name ?? "Loading..."}
                     </Text>
                 </View>
@@ -151,7 +188,19 @@ export default function ListingDetails() {
                         </View>
                     )}
 
-                    <View className="mx-4 mt-4">
+                    <TouchableOpacity
+                        className="mx-4 mt-4"
+                        activeOpacity={0.75}
+                        onPress={() =>
+                            router.push({
+                                pathname: "/(listings)/sellerProfile",
+                                params: {
+                                    sellerId: listing.userId,
+                                    sellerUsername: listing.username,
+                                },
+                            })
+                        }
+                    >
                         <Text className="text-red-500 text-[11px] font-bold uppercase tracking-widest mb-2">
                             Seller
                         </Text>
@@ -166,9 +215,31 @@ export default function ListingDetails() {
                                 <Text className="text-white text-[15px] font-bold mt-0.5">
                                     {listing?.username ?? "Unknown"}
                                 </Text>
+                                {reviewStats && reviewStats.totalReviews > 0 && (
+                                    <View className="flex-row items-center mt-1">
+                                        <Ionicons
+                                            name="thumbs-up-outline"
+                                            size={11}
+                                            color={getScoreColor(reviewStats.positivePercentage)}
+                                        />
+                                        <Text
+                                            className="text-[11px] font-bold ml-1"
+                                            style={{ color: getScoreColor(reviewStats.positivePercentage) }}
+                                        >
+                                            {reviewStats.positivePercentage}% positive
+                                        </Text>
+                                        <Text className="text-slate-600 text-[11px] ml-1">
+                                            ({reviewStats.totalReviews} {reviewStats.totalReviews === 1 ? "review" : "reviews"})
+                                        </Text>
+                                    </View>
+                                )}
+                                {reviewStats && reviewStats.totalReviews === 0 && (
+                                    <Text className="text-slate-600 text-[11px] mt-1">No reviews yet</Text>
+                                )}
                             </View>
+                            <Ionicons name="chevron-forward" size={18} color="#ffffff40" />
                         </View>
-                    </View>
+                    </TouchableOpacity>
 
                     <View className="mx-4 mt-4">
                         <Text className="text-red-500 text-[11px] font-bold uppercase tracking-widest mb-2">
@@ -229,7 +300,7 @@ export default function ListingDetails() {
                             </TouchableOpacity>
                         )}
 
-                        { user.id === listing.userId &&
+                        {user.id === listing.userId && (
                             <TouchableOpacity
                                 onPress={() =>
                                     router.push({
@@ -245,15 +316,16 @@ export default function ListingDetails() {
                                     View Product Page
                                 </Text>
                             </TouchableOpacity>
-                        }
-                        { user.id === listing.userId &&
+                        )}
+
+                        {user.id === listing.userId && (
                             <TouchableOpacity
                                 onPress={() =>
-                                router.push({
-                                    pathname: "/(listings)/editListing",
-                                    params: { id: listing.id },
-                                })
-                            }
+                                    router.push({
+                                        pathname: "/(listings)/editListing",
+                                        params: { id: listing.id },
+                                    })
+                                }
                                 className="flex-row items-center justify-center bg-white border border-white rounded-xl py-4"
                                 activeOpacity={0.8}
                             >
@@ -261,8 +333,21 @@ export default function ListingDetails() {
                                 <Text className="text-black text-[15px] font-bold ml-2">
                                     Edit listing details
                                 </Text>
-                        </TouchableOpacity>
-                        }
+                            </TouchableOpacity>
+                        )}
+
+                        {user.id === listing.userId && (
+                            <TouchableOpacity
+                                onPress={handleDelete}
+                                className="flex-row items-center justify-center bg-red-500/20 border border-red-500 rounded-xl py-4"
+                                activeOpacity={0.8}
+                            >
+                                <Ionicons name="trash-outline" size={20} color="#ef4444" />
+                                <Text className="text-red-400 text-[15px] font-bold ml-2">
+                                    Delete Listing
+                                </Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 </ScrollView>
             )}
