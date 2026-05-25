@@ -6,11 +6,6 @@ const MIME_TYPES = {
     webp: "image/webp",
 };
 
-/**
- * Uploads a local image URI to Cloudinary using an unsigned upload preset.
- * @param {string} imageUri - Local file URI from expo-image-picker (file://…)
- * @returns {Promise<string>} - The secure Cloudinary URL of the uploaded image
- */
 export async function uploadImageToCloudinary(imageUri) {
     const filename = imageUri.split("/").pop();
     const ext = filename.split(".").pop().toLowerCase();

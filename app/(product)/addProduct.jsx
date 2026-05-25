@@ -19,6 +19,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useUser } from "../../src/context/UserContext";
 import api from "../../src/services/api";
 import { uploadImageToCloudinary } from "../../src/services/cloudinary";
+import { CategoryPicker } from "../../src/components/categories";
 
 function FormField({ icon, label, children, noBorder }) {
     return (
@@ -62,28 +63,22 @@ export default function AddProduct() {
     const [localImageUri, setLocalImageUri] = useState(null);
     const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
     const [uploading, setUploading] = useState(false);
-
     const [saving, setSaving] = useState(false);
 
     async function pickImage() {
         if (Platform.OS !== "web") {
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (status !== "granted") {
-                ToastAndroid.show(
-                    "Gallery permission is required to pick a photo.",
-                    ToastAndroid.LONG
-                );
+                ToastAndroid.show("Gallery permission is required to pick a photo.", ToastAndroid.LONG);
                 return;
             }
         }
-
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ["images"],
             allowsEditing: true,
             aspect: [4, 3],
             quality: 0.85,
         });
-
         if (!result.canceled && result.assets?.length > 0) {
             const uri = result.assets[0].uri;
             setLocalImageUri(uri);
@@ -113,7 +108,7 @@ export default function AddProduct() {
     }
 
     async function handleAddProduct() {
-        if (!name.trim() || !category.trim() || !collection.trim() || !description.trim()) {
+        if (!name.trim() || !category || !collection.trim() || !description.trim()) {
             ToastAndroid.show("Please fill in all required fields!", ToastAndroid.SHORT);
             return;
         }
@@ -134,7 +129,7 @@ export default function AddProduct() {
                 productDescription: description.trim(),
                 productImage: uploadedImageUrl ?? null,
                 productCollection: collection.trim(),
-                productCategory: category.trim(),
+                productCategory: category,
                 manufactureYear: year,
                 userId: user.id,
             });
@@ -163,12 +158,8 @@ export default function AddProduct() {
                         <Ionicons name="arrow-back" size={22} color="#ef4444" />
                     </TouchableOpacity>
                     <View className="flex-1">
-                        <Text className="text-red-500 text-[13px] font-bold uppercase">
-                            My Collection
-                        </Text>
-                        <Text className="text-white text-[22px] font-extrabold">
-                            Add New Item
-                        </Text>
+                        <Text className="text-red-500 text-[13px] font-bold uppercase">My Collection</Text>
+                        <Text className="text-white text-[22px] font-extrabold">Add New Item</Text>
                     </View>
                     <View className="bg-zinc-900 border border-white rounded-full p-2">
                         <Ionicons name="cube-outline" size={22} color="#ef4444" />
@@ -192,38 +183,25 @@ export default function AddProduct() {
                                     style={{ width: "100%", height: 200 }}
                                     resizeMode="cover"
                                 />
-
                                 {uploading && (
-                                    <View
-                                        style={{
-                                            position: "absolute",
-                                            inset: 0,
-                                            backgroundColor: "rgba(0,0,0,0.65)",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                        }}
-                                    >
+                                    <View style={{
+                                        position: "absolute", inset: 0,
+                                        backgroundColor: "rgba(0,0,0,0.65)",
+                                        alignItems: "center", justifyContent: "center",
+                                    }}>
                                         <ActivityIndicator color="#ef4444" size="large" />
-                                        <Text className="text-white font-bold text-base mt-3">
-                                            Uploading…
-                                        </Text>
+                                        <Text className="text-white font-bold text-base mt-3">Uploading…</Text>
                                     </View>
                                 )}
-
                                 {!uploading && (
                                     <View className="absolute top-2 right-2 flex-row gap-2">
                                         {uploadedImageUrl && (
                                             <View className="flex-row items-center bg-black/70 border border-green-500 rounded-full px-2 py-1">
                                                 <Ionicons name="cloud-done-outline" size={13} color="#22c55e" />
-                                                <Text className="text-green-400 text-[11px] ml-1 font-bold">
-                                                    Uploaded
-                                                </Text>
+                                                <Text className="text-green-400 text-[11px] ml-1 font-bold">Uploaded</Text>
                                             </View>
                                         )}
-                                        <TouchableOpacity
-                                            onPress={removeImage}
-                                            className="bg-black/70 border border-white rounded-full p-1.5"
-                                        >
+                                        <TouchableOpacity onPress={removeImage} className="bg-black/70 border border-white rounded-full p-1.5">
                                             <Ionicons name="close" size={14} color="#fff" />
                                         </TouchableOpacity>
                                     </View>
@@ -236,12 +214,8 @@ export default function AddProduct() {
                                 style={{ borderStyle: "dashed" }}
                             >
                                 <Ionicons name="image-outline" size={44} color="#ef4444" />
-                                <Text className="text-white font-semibold text-[15px] mt-3">
-                                    Choose from Gallery
-                                </Text>
-                                <Text className="text-slate-500 text-[12px] mt-1">
-                                    JPG, PNG or WebP · Optional
-                                </Text>
+                                <Text className="text-white font-semibold text-[15px] mt-3">Choose from Gallery</Text>
+                                <Text className="text-slate-500 text-[12px] mt-1">JPG, PNG or WebP · Optional</Text>
                             </TouchableOpacity>
                         )}
 
@@ -270,11 +244,7 @@ export default function AddProduct() {
                             </FormField>
 
                             <FormField icon="pricetag-outline" label="Category *">
-                                <FormInput
-                                    value={category}
-                                    onChangeText={setCategory}
-                                    placeholder="e.g. Trading Card, Figurine, Stamp…"
-                                />
+                                <CategoryPicker value={category} onChange={setCategory} />
                             </FormField>
 
                             <FormField icon="library-outline" label="Collection *">
@@ -307,9 +277,7 @@ export default function AddProduct() {
                     </View>
 
                     <View className="mx-4 mb-4">
-                        <Text className="text-red-500 text-[13px] font-bold uppercase mb-2 ml-1">
-                            Actions
-                        </Text>
+                        <Text className="text-red-500 text-[13px] font-bold uppercase mb-2 ml-1">Actions</Text>
                         <View className="rounded-xl border border-white bg-black overflow-hidden">
                             <TouchableOpacity
                                 className="flex-row items-center p-4 border-b border-white"
@@ -325,12 +293,7 @@ export default function AddProduct() {
                                     {saving ? "Saving…" : uploading ? "Waiting for upload…" : "Save to Collection"}
                                 </Text>
                                 {!isBusy && (
-                                    <Ionicons
-                                        name="chevron-forward"
-                                        size={20}
-                                        color="#ffffff40"
-                                        style={{ marginLeft: "auto" }}
-                                    />
+                                    <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: "auto" }} />
                                 )}
                             </TouchableOpacity>
 
@@ -340,15 +303,8 @@ export default function AddProduct() {
                                 disabled={isBusy}
                             >
                                 <Ionicons name="close-circle-outline" size={20} color="#ef4444" />
-                                <Text className="text-red-500 text-[16px] ml-3 font-semibold">
-                                    Cancel
-                                </Text>
-                                <Ionicons
-                                    name="chevron-forward"
-                                    size={20}
-                                    color="#ffffff40"
-                                    style={{ marginLeft: "auto" }}
-                                />
+                                <Text className="text-red-500 text-[16px] ml-3 font-semibold">Cancel</Text>
+                                <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: "auto" }} />
                             </TouchableOpacity>
                         </View>
                     </View>

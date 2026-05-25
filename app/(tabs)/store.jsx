@@ -1,26 +1,28 @@
 import {
     View,
     Text,
-    FlatList,
     Image,
     RefreshControl,
     TouchableOpacity,
     ActivityIndicator,
+    ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { useFocusEffect, router } from "expo-router";
 import { useUser } from "../../src/context/UserContext";
 import api from "../../src/services/api";
+import { CATEGORIES } from "../../src/components/categories";
 
 const PAGE_SIZE = 10;
 
 function ListingCard({ item, isFavourited, onPress, onToggleFavourite }) {
     return (
         <TouchableOpacity
-            className="flex-1 m-2 bg-black border border-white rounded-xl overflow-hidden"
+            style={{ flex: 1, margin: 6 }}
+            className="bg-black border border-white rounded-xl overflow-hidden"
             onPress={onPress}
             activeOpacity={0.75}
         >
@@ -37,10 +39,7 @@ function ListingCard({ item, isFavourited, onPress, onToggleFavourite }) {
                     </View>
                 )}
                 <TouchableOpacity
-                    onPress={(e) => {
-                        e.stopPropagation();
-                        onToggleFavourite(item);
-                    }}
+                    onPress={(e) => { e.stopPropagation(); onToggleFavourite(item); }}
                     className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/70 items-center justify-center border border-white"
                     activeOpacity={0.8}
                     hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
@@ -82,22 +81,115 @@ function ListingCard({ item, isFavourited, onPress, onToggleFavourite }) {
     );
 }
 
+function RecommendationCard({ item, isFavourited, onPress, onToggleFavourite }) {
+    return (
+        <TouchableOpacity
+            onPress={onPress}
+            activeOpacity={0.75}
+            style={{ width: 160, marginRight: 12 }}
+            className="bg-black border border-white/30 rounded-xl overflow-hidden"
+        >
+            <View className="relative">
+                {item.product?.image ? (
+                    <Image
+                        source={{ uri: item.product.image }}
+                        style={{ width: "100%", height: 110 }}
+                        resizeMode="cover"
+                    />
+                ) : (
+                    <View style={{ width: "100%", height: 110 }} className="bg-zinc-800 items-center justify-center">
+                        <Ionicons name="cube-outline" size={32} color="#ef4444" />
+                    </View>
+                )}
+                <TouchableOpacity
+                    onPress={(e) => { e.stopPropagation(); onToggleFavourite(item); }}
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/70 items-center justify-center border border-white"
+                    activeOpacity={0.8}
+                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                >
+                    <Ionicons
+                        name={isFavourited ? "heart" : "heart-outline"}
+                        size={13}
+                        color={isFavourited ? "#ef4444" : "#ffffff"}
+                    />
+                </TouchableOpacity>
+            </View>
+            <View className="p-2">
+                <Text className="text-white font-bold text-[13px]" numberOfLines={1}>
+                    {item.product?.name ?? "—"}
+                </Text>
+                <Text className="text-red-500 text-[11px] mt-0.5" numberOfLines={1}>
+                    {item.product?.category ?? "—"}
+                </Text>
+                <Text className="text-red-500 text-[15px] font-extrabold mt-1">
+                    ${item.price}
+                </Text>
+            </View>
+        </TouchableOpacity>
+    );
+}
+
+function ListingsGrid({ listings, favouriteMap, togglingIds, onPress, onToggleFavourite }) {
+    const rows = [];
+    for (let i = 0; i < listings.length; i += 2) {
+        rows.push(
+            <View key={i} style={{ flexDirection: "row", paddingHorizontal: 6 }}>
+                <ListingCard
+                    item={listings[i]}
+                    isFavourited={!!favouriteMap[listings[i].id]}
+                    onPress={() => onPress(listings[i])}
+                    onToggleFavourite={onToggleFavourite}
+                />
+                {listings[i + 1] ? (
+                    <ListingCard
+                        item={listings[i + 1]}
+                        isFavourited={!!favouriteMap[listings[i + 1].id]}
+                        onPress={() => onPress(listings[i + 1])}
+                        onToggleFavourite={onToggleFavourite}
+                    />
+                ) : (
+                    <View style={{ flex: 1, margin: 6 }} />
+                )}
+            </View>
+        );
+    }
+    return <>{rows}</>;
+}
+
 export default function Store() {
     const { user } = useUser();
 
     const [listings, setListings] = useState([]);
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
-    const [listKey, setListKey] = useState(0);
-    const loadingRef = useRef(false);
+    const [selectedCategory, setSelectedCategory] = useState(null);
     const pageRef = useRef(0);
+
+    const [recommendations, setRecommendations] = useState([]);
+    const [recsLoading, setRecsLoading] = useState(false);
 
     const [favouriteMap, setFavouriteMap] = useState({});
     const [favouriteCount, setFavouriteCount] = useState(0);
     const [togglingIds, setTogglingIds] = useState(new Set());
     const favLoadingRef = useRef(false);
+
+    const fetchRecommendations = useCallback(async () => {
+        if (!user?.id) return;
+        setRecsLoading(true);
+        try {
+            const res = await api.get("/api/v1/getRecommendations", {
+                params: { userId: user.id, limit: 10 },
+            });
+            setRecommendations(res.data ?? []);
+        } catch (err) {
+            console.error("Failed to fetch recommendations:", err);
+        } finally {
+            setRecsLoading(false);
+        }
+    }, [user?.id]);
 
     const fetchFavouritesPage = useCallback(async (pageToFetch, reset = false) => {
         if (!user?.id) return;
@@ -123,9 +215,8 @@ export default function Store() {
     }, [user?.id]);
 
     const fetchListings = useCallback(async (pageToFetch, reset = false) => {
-        if (loadingRef.current) return;
-        loadingRef.current = true;
-        setLoading(true);
+        if (reset) setLoading(true);
+        else setLoadingMore(true);
         setError(null);
         try {
             const response = await api.get("/api/v1/getAllListings", {
@@ -147,37 +238,36 @@ export default function Store() {
             console.error("Failed to fetch listings:", err);
             setError("Could not load listings. Please try again.");
         } finally {
-            loadingRef.current = false;
             setLoading(false);
+            setLoadingMore(false);
         }
     }, []);
 
     useFocusEffect(
         useCallback(() => {
-            loadingRef.current = false;
             pageRef.current = 0;
             favLoadingRef.current = false;
-            setListKey((k) => k + 1);
             setHasMore(true);
+            setSelectedCategory(null);
             fetchListings(0, true);
             fetchFavouritesPage(0, true);
-        }, [fetchListings, fetchFavouritesPage])
+            fetchRecommendations();
+        }, [fetchListings, fetchFavouritesPage, fetchRecommendations])
     );
 
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
-        loadingRef.current = false;
         pageRef.current = 0;
         favLoadingRef.current = false;
-        setListKey((k) => k + 1);
         setHasMore(true);
-        await Promise.all([fetchListings(0, true), fetchFavouritesPage(0, true)]);
+        setSelectedCategory(null);
+        await Promise.all([
+            fetchListings(0, true),
+            fetchFavouritesPage(0, true),
+            fetchRecommendations(),
+        ]);
         setRefreshing(false);
-    }, [fetchListings, fetchFavouritesPage]);
-
-    const handleLoadMore = useCallback(() => {
-        if (hasMore && !loadingRef.current) fetchListings(pageRef.current);
-    }, [hasMore, fetchListings]);
+    }, [fetchListings, fetchFavouritesPage, fetchRecommendations]);
 
     async function handleToggleFavourite(item) {
         if (!user?.id) return;
@@ -213,39 +303,10 @@ export default function Store() {
         }
     }
 
-    const renderItem = useCallback(
-        ({ item }) => (
-            <ListingCard
-                item={item}
-                isFavourited={!!favouriteMap[item.id]}
-                onPress={() =>
-                    router.push({ pathname: "/(listings)/listingDetails", params: { id: item.id } })
-                }
-                onToggleFavourite={handleToggleFavourite}
-            />
-        ),
-        [favouriteMap, togglingIds]
-    );
-
-    const renderFooter = () => {
-        if (!loading) return null;
-        return (
-            <View className="py-4 items-center">
-                <ActivityIndicator color="#ef4444" size="small" />
-            </View>
-        );
-    };
-
-    const renderEmpty = () => {
-        if (loading) return null;
-        return (
-            <View className="flex-1 items-center justify-center mt-20 px-6">
-                <Ionicons name="storefront-outline" size={64} color="#ef4444" />
-                <Text className="text-white text-xl font-bold mt-4 text-center">No listings yet!</Text>
-                <Text className="text-slate-400 text-sm mt-2 text-center">Be the first to list an item for sale.</Text>
-            </View>
-        );
-    };
+    const filteredListings = useMemo(() => {
+        if (!selectedCategory) return listings;
+        return listings.filter((l) => l.product?.category === selectedCategory);
+    }, [listings, selectedCategory]);
 
     return (
         <SafeAreaView className="flex-1 bg-black">
@@ -264,6 +325,36 @@ export default function Store() {
                 </TouchableOpacity>
             </View>
 
+            {/* Category chips */}
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 10, gap: 8 }}
+                className="border-b border-white/10 max-h-14"
+            >
+                <TouchableOpacity
+                    onPress={() => setSelectedCategory(null)}
+                    className={`px-4 py-1.5 rounded-full border ${!selectedCategory ? "bg-red-500 border-red-500" : "bg-black border-white"}`}
+                    activeOpacity={0.7}
+                >
+                    <Text className={`text-[12px] font-bold ${!selectedCategory ? "text-white" : "text-slate-400"}`}>
+                        All
+                    </Text>
+                </TouchableOpacity>
+                {CATEGORIES.map((cat) => (
+                    <TouchableOpacity
+                        key={cat}
+                        onPress={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
+                        className={`px-4 py-1.5 rounded-full border ${selectedCategory === cat ? "bg-red-500 border-red-500" : "bg-black border-white"}`}
+                        activeOpacity={0.7}
+                    >
+                        <Text className={`text-[12px] font-bold ${selectedCategory === cat ? "text-white" : "text-slate-400"}`}>
+                            {cat}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+
             {error && (
                 <View className="mx-4 mt-3 p-3 bg-red-500/20 border border-red-500 rounded-xl flex-row items-center">
                     <Ionicons name="alert-circle-outline" size={18} color="#ef4444" />
@@ -275,22 +366,9 @@ export default function Store() {
             )}
 
             <View className="flex-1">
-                <FlatList
-                    key={listKey}
-                    data={listings}
-                    keyExtractor={(item) => String(item.id)}
-                    renderItem={renderItem}
-                    numColumns={2}
-                    contentContainerStyle={{
-                        paddingHorizontal: 6,
-                        paddingTop: 8,
-                        paddingBottom: 120,
-                        flexGrow: 1,
-                    }}
-                    onEndReached={handleLoadMore}
-                    onEndReachedThreshold={0.4}
-                    ListFooterComponent={renderFooter}
-                    ListEmptyComponent={renderEmpty}
+                <ScrollView
+                    contentContainerStyle={{ paddingBottom: 120 }}
+                    showsVerticalScrollIndicator={false}
                     refreshControl={
                         <RefreshControl
                             refreshing={refreshing}
@@ -300,8 +378,91 @@ export default function Store() {
                             progressBackgroundColor="#000"
                         />
                     }
-                    showsVerticalScrollIndicator={false}
-                />
+                >
+                    {!selectedCategory && (recommendations.length > 0 || recsLoading) && (
+                        <View className="mx-4 mt-4 mb-2 bg-zinc-900 border border-white/20 rounded-2xl overflow-hidden">
+                            <View className="flex-row items-center px-4 pt-4 pb-2">
+                                <Ionicons name="sparkles" size={16} color="#ef4444" />
+                                <Text className="text-red-500 text-[13px] font-bold uppercase ml-2">For You</Text>
+                                <Text className="text-slate-600 text-[11px] ml-2">swipe to explore →</Text>
+                            </View>
+                            {recsLoading ? (
+                                <ActivityIndicator color="#ef4444" style={{ marginVertical: 30 }} />
+                            ) : (
+                                <ScrollView
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 14 }}
+                                >
+                                    {recommendations.map((item) => (
+                                        <RecommendationCard
+                                            key={item.id}
+                                            item={item}
+                                            isFavourited={!!favouriteMap[item.id]}
+                                            onPress={() =>
+                                                router.push({ pathname: "/(listings)/listingDetails", params: { id: item.id } })
+                                            }
+                                            onToggleFavourite={handleToggleFavourite}
+                                        />
+                                    ))}
+                                </ScrollView>
+                            )}
+                        </View>
+                    )}
+
+                    <View className="px-4 pt-2 pb-1 flex-row items-center justify-between">
+                        <Text className="text-white text-[18px] font-extrabold">
+                            {selectedCategory ? selectedCategory : "All Listings"}
+                        </Text>
+                        {selectedCategory && (
+                            <Text className="text-slate-500 text-[12px]">
+                                {filteredListings.length} result{filteredListings.length !== 1 ? "s" : ""}
+                            </Text>
+                        )}
+                    </View>
+
+                    {loading ? (
+                        <View className="items-center justify-center py-20">
+                            <ActivityIndicator color="#ef4444" size="large" />
+                        </View>
+                    ) : filteredListings.length === 0 ? (
+                        <View className="items-center justify-center mt-20 px-6">
+                            <Ionicons name="storefront-outline" size={64} color="#ef4444" />
+                            <Text className="text-white text-xl font-bold mt-4 text-center">
+                                {selectedCategory ? `No listings in "${selectedCategory}"` : "No listings yet!"}
+                            </Text>
+                            <Text className="text-slate-400 text-sm mt-2 text-center">
+                                {selectedCategory ? "Try a different category." : "Be the first to list an item for sale."}
+                            </Text>
+                        </View>
+                    ) : (
+                        <ListingsGrid
+                            listings={filteredListings}
+                            favouriteMap={favouriteMap}
+                            togglingIds={togglingIds}
+                            onPress={(item) => router.push({ pathname: "/(listings)/listingDetails", params: { id: item.id } })}
+                            onToggleFavourite={handleToggleFavourite}
+                        />
+                    )}
+
+                    {!selectedCategory && hasMore && !loading && (
+                        <TouchableOpacity
+                            onPress={() => fetchListings(pageRef.current)}
+                            disabled={loadingMore}
+                            className="mx-4 mt-2 mb-4 py-3 border border-white rounded-xl flex-row items-center justify-center"
+                            activeOpacity={0.8}
+                        >
+                            {loadingMore ? (
+                                <ActivityIndicator color="#ef4444" size="small" />
+                            ) : (
+                                <>
+                                    <Ionicons name="chevron-down" size={18} color="#ef4444" />
+                                    <Text className="text-white text-[14px] font-semibold ml-2">Load More</Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
+                    )}
+                </ScrollView>
 
                 <TouchableOpacity
                     onPress={() => router.push("/(tabs)/userFavourites")}

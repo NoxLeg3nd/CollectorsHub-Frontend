@@ -6,11 +6,12 @@ import {
     TouchableOpacity,
     Image,
     RefreshControl,
+    ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { useFocusEffect, router } from "expo-router";
 import { useUser } from "../../src/context/UserContext";
 import api from "../../src/services/api";
@@ -75,6 +76,7 @@ export default function Home() {
     const [error, setError] = useState(null);
     const [totalItems, setTotalItems] = useState(0);
     const [listKey, setListKey] = useState(0);
+    const [selectedCategory, setSelectedCategory] = useState(null);
 
     const loadingRef = useRef(false);
     const pageRef = useRef(0);
@@ -120,6 +122,7 @@ export default function Home() {
             pageRef.current = 0;
             setListKey((k) => k + 1);
             setHasMore(true);
+            setSelectedCategory(null);
             fetchProducts(0, true);
         }, [user?.id])
     );
@@ -130,13 +133,28 @@ export default function Home() {
         pageRef.current = 0;
         setListKey((k) => k + 1);
         setHasMore(true);
+        setSelectedCategory(null);
         await fetchProducts(0, true);
         setRefreshing(false);
     }, [fetchProducts]);
 
     const handleLoadMore = useCallback(() => {
-        if (hasMore && !loadingRef.current) fetchProducts(pageRef.current);
-    }, [hasMore, fetchProducts]);
+        if (hasMore && !loadingRef.current && !selectedCategory) fetchProducts(pageRef.current);
+    }, [hasMore, fetchProducts, selectedCategory]);
+
+    const categories = useMemo(() => {
+        const cats = products
+            .map((p) => p.category)
+            .filter(Boolean)
+            .filter((v, i, a) => a.indexOf(v) === i)
+            .sort();
+        return cats;
+    }, [products]);
+
+    const filteredProducts = useMemo(() => {
+        if (!selectedCategory) return products;
+        return products.filter((p) => p.category === selectedCategory);
+    }, [products, selectedCategory]);
 
     const renderItem = useCallback(
         ({ item }) => (
@@ -164,8 +182,12 @@ export default function Home() {
         return (
             <View className="flex-1 items-center justify-center mt-20 px-6">
                 <Ionicons name="cube-outline" size={64} color="#ef4444" />
-                <Text className="text-white text-xl font-bold mt-4 text-center">No items yet</Text>
-                <Text className="text-slate-400 text-sm mt-2 text-center">Your collection is empty. Start adding products!</Text>
+                <Text className="text-white text-xl font-bold mt-4 text-center">
+                    {selectedCategory ? `No items in "${selectedCategory}"` : "No items yet"}
+                </Text>
+                <Text className="text-slate-400 text-sm mt-2 text-center">
+                    {selectedCategory ? "Try a different category." : "Your collection is empty. Start adding products!"}
+                </Text>
             </View>
         );
     };
@@ -181,7 +203,9 @@ export default function Home() {
                         {user?.username ?? "Collector"}
                     </Text>
                     <Text className="text-slate-400 text-[12px] mt-0.5">
-                        {totalItems} {totalItems === 1 ? "item" : "items"} in your collection
+                        {selectedCategory
+                            ? `${filteredProducts.length} item${filteredProducts.length !== 1 ? "s" : ""} in "${selectedCategory}"`
+                            : `${totalItems} ${totalItems === 1 ? "item" : "items"} in your collection`}
                     </Text>
                 </View>
                 <TouchableOpacity
@@ -191,6 +215,37 @@ export default function Home() {
                     <Ionicons name="search-outline" size={24} color="#ef4444" />
                 </TouchableOpacity>
             </View>
+
+            {categories.length > 0 && (
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 10, gap: 8 }}
+                    className="border-b border-white/10 max-h-14"
+                >
+                    <TouchableOpacity
+                        onPress={() => setSelectedCategory(null)}
+                        className={`px-4 py-1.5 rounded-full border ${!selectedCategory ? "bg-red-500 border-red-500" : "bg-black border-white"}`}
+                        activeOpacity={0.7}
+                    >
+                        <Text className={`text-[12px] font-bold ${!selectedCategory ? "text-white" : "text-slate-400"}`}>
+                            All
+                        </Text>
+                    </TouchableOpacity>
+                    {categories.map((cat) => (
+                        <TouchableOpacity
+                            key={cat}
+                            onPress={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
+                            className={`px-4 py-1.5 rounded-full border ${selectedCategory === cat ? "bg-red-500 border-red-500" : "bg-black border-white"}`}
+                            activeOpacity={0.7}
+                        >
+                            <Text className={`text-[12px] font-bold ${selectedCategory === cat ? "text-white" : "text-slate-400"}`}>
+                                {cat}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            )}
 
             {error && (
                 <View className="mx-4 mt-3 p-3 bg-red-500/20 border border-red-500 rounded-xl flex-row items-center">
@@ -204,8 +259,8 @@ export default function Home() {
 
             <View className="flex-1">
                 <FlatList
-                    key={listKey}
-                    data={products}
+                    key={listKey + (selectedCategory ?? "")}
+                    data={filteredProducts}
                     keyExtractor={(item) => String(item.id)}
                     renderItem={renderItem}
                     numColumns={2}

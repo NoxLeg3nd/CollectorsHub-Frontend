@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import api from "../../src/services/api";
 import { uploadImageToCloudinary } from "../../src/services/cloudinary";
+import { CategoryPicker } from "../../src/components/categories";
 
 function InputField({ label, icon, value, onChangeText, placeholder, keyboardType = "default", multiline = false }) {
     return (
@@ -61,16 +62,13 @@ export default function EditProduct() {
     const [manufactureYear, setManufactureYear] = useState("");
     const [description, setDescription] = useState("");
     const [image, setImage] = useState("");
-
     const [localImageUri, setLocalImageUri] = useState(null);
 
     useEffect(() => {
         const fetchProduct = async () => {
             try {
                 setLoading(true);
-                const response = await api.get("/api/v1/getProductById", {
-                    params: { id },
-                });
+                const response = await api.get("/api/v1/getProductById", { params: { id } });
                 const p = response.data;
                 setName(p.name ?? "");
                 setCategory(p.category ?? "");
@@ -85,7 +83,6 @@ export default function EditProduct() {
                 setLoading(false);
             }
         };
-
         if (id) fetchProduct();
     }, [id]);
 
@@ -126,23 +123,18 @@ export default function EditProduct() {
     }
 
     const handleSave = async () => {
-        if (!name.trim()) {
-            setError("Product name is required.");
-            return;
-        }
+        if (!name.trim()) { setError("Product name is required."); return; }
         try {
             setSaving(true);
             setError(null);
             await api.put("/api/v1/editProduct", {
                 newProductName: name.trim(),
-                newProductCategory: category.trim(),
+                newProductCategory: category,
                 newProductCollection: collection.trim(),
                 newManufactureYear: manufactureYear ? parseInt(manufactureYear) : null,
                 newProductDescription: description.trim(),
                 newProductImage: image.trim(),
-            }, {
-                params: { id },
-            });
+            }, { params: { id } });
             router.back();
         } catch (err) {
             console.error("Failed to update product:", err);
@@ -156,9 +148,7 @@ export default function EditProduct() {
         try {
             setDeleting(true);
             setError(null);
-            await api.delete("/api/v1/removeProduct", {
-                params: { id },
-            });
+            await api.delete("/api/v1/removeProduct", { params: { id } });
             router.back();
             router.back();
         } catch (err) {
@@ -182,9 +172,7 @@ export default function EditProduct() {
                     <Ionicons name="arrow-back" size={22} color="#fff" />
                 </TouchableOpacity>
                 <View className="flex-1">
-                    <Text className="text-red-500 text-[13px] font-bold uppercase">
-                        Edit Item
-                    </Text>
+                    <Text className="text-red-500 text-[13px] font-bold uppercase">Edit Item</Text>
                     <Text className="text-white text-[22px] font-extrabold" numberOfLines={1}>
                         {name || "Loading..."}
                     </Text>
@@ -199,9 +187,7 @@ export default function EditProduct() {
                     ) : (
                         <>
                             <Ionicons name="trash-outline" size={14} color="#ef4444" />
-                            <Text className="text-red-500 text-[13px] font-semibold ml-1">
-                                Delete
-                            </Text>
+                            <Text className="text-red-500 text-[13px] font-semibold ml-1">Delete</Text>
                         </>
                     )}
                 </TouchableOpacity>
@@ -215,9 +201,7 @@ export default function EditProduct() {
                     ) : (
                         <>
                             <Ionicons name="checkmark-outline" size={14} color="#fff" />
-                            <Text className="text-white text-[13px] font-semibold ml-1">
-                                Save
-                            </Text>
+                            <Text className="text-white text-[13px] font-semibold ml-1">Save</Text>
                         </>
                     )}
                 </TouchableOpacity>
@@ -256,13 +240,19 @@ export default function EditProduct() {
                             onChangeText={setName}
                             placeholder="Product name"
                         />
-                        <InputField
-                            label="Category"
-                            icon="pricetag-outline"
-                            value={category}
-                            onChangeText={setCategory}
-                            placeholder="e.g. Sneakers, Watches..."
-                        />
+
+                        <View className="mx-4 mt-3">
+                            <View className="flex-row items-center mb-1.5">
+                                <Ionicons name="pricetag-outline" size={13} color="#ef4444" />
+                                <Text className="text-red-500 text-[13px] font-semibold ml-1 uppercase tracking-widest">
+                                    Category
+                                </Text>
+                            </View>
+                            <View className="bg-zinc-900 border border-white rounded-xl px-4 py-3">
+                                <CategoryPicker value={category} onChange={setCategory} />
+                            </View>
+                        </View>
+
                         <InputField
                             label="Collection"
                             icon="library-outline"
@@ -294,24 +284,16 @@ export default function EditProduct() {
                                         style={{ width: "100%", height: 180 }}
                                         resizeMode="cover"
                                     />
-
                                     {uploading && (
-                                        <View
-                                            style={{
-                                                position: "absolute",
-                                                inset: 0,
-                                                backgroundColor: "rgba(0,0,0,0.65)",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
+                                        <View style={{
+                                            position: "absolute", inset: 0,
+                                            backgroundColor: "rgba(0,0,0,0.65)",
+                                            alignItems: "center", justifyContent: "center",
+                                        }}>
                                             <ActivityIndicator color="#ef4444" size="large" />
-                                            <Text className="text-white font-bold text-base mt-3">
-                                                Uploading…
-                                            </Text>
+                                            <Text className="text-white font-bold text-base mt-3">Uploading…</Text>
                                         </View>
                                     )}
-
                                     {!uploading && (
                                         <View className="absolute top-2 right-2 flex-row" style={{ gap: 6 }}>
                                             <TouchableOpacity
@@ -336,12 +318,8 @@ export default function EditProduct() {
                                     className="border border-white rounded-xl items-center justify-center py-8 bg-zinc-900"
                                 >
                                     <Ionicons name="image-outline" size={36} color="#ef4444" />
-                                    <Text className="text-white text-[13px] mt-2 font-semibold">
-                                        Choose from Gallery
-                                    </Text>
-                                    <Text className="text-slate-500 text-[11px] mt-1">
-                                        Replace the current image
-                                    </Text>
+                                    <Text className="text-white text-[13px] mt-2 font-semibold">Choose from Gallery</Text>
+                                    <Text className="text-slate-500 text-[11px] mt-1">Replace the current image</Text>
                                 </TouchableOpacity>
                             )}
                         </View>

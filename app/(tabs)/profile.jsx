@@ -50,25 +50,47 @@ export default function Profile() {
                 <ScrollView className="flex-1">
                     <View className="mx-4 mt-6 mb-4">
                         <Text className="text-red-500 text-[13px] font-bold uppercase mb-2 ml-1">Your Stats</Text>
-                        <View className="border border-white rounded-xl p-4 bg-black">
-                            <View className="flex-row justify-around">
-                                <View className="items-center flex-1 mr-2">
+                        <View className="border border-white rounded-xl bg-black overflow-hidden">
+                            <View className="flex-row">
+                                <TouchableOpacity
+                                    className="items-center flex-1 py-4"
+                                    activeOpacity={0.6}
+                                    onPress={() => router.push("/(tabs)/home")}
+                                >
                                     <Text className="text-red-500 text-[24px] font-extrabold">{productsCount}</Text>
                                     <Text className="text-slate-400 text-[13px] mt-1">Products</Text>
-                                </View>
+                                </TouchableOpacity>
+
                                 <View className="w-px bg-white" />
-                                <View className="items-center flex-1">
+
+                                <TouchableOpacity
+                                    className="items-center flex-1 py-4"
+                                    activeOpacity={0.6}
+                                    onPress={() =>
+                                        router.push({
+                                            pathname: "/(listings)/sellerProfile",
+                                            params: { sellerId: user?.id, sellerUsername: user?.username },
+                                        })
+                                    }
+                                >
                                     <Text className="text-red-500 text-[24px] font-extrabold">{listingsCount}</Text>
                                     <Text className="text-slate-400 text-[13px] mt-1">Listings</Text>
-                                </View>
+                                </TouchableOpacity>
+
                                 <View className="w-px bg-white" />
-                                <View className="items-center flex-1 ml-2">
+
+                                <TouchableOpacity
+                                    className="items-center flex-1 py-4"
+                                    activeOpacity={0.6}
+                                    onPress={() => router.push("/(tabs)/userFavourites")}
+                                >
                                     <Text className="text-red-500 text-[24px] font-extrabold">{favouritesCount}</Text>
                                     <Text className="text-slate-400 text-[13px] mt-1">Favorites</Text>
-                                </View>
+                                </TouchableOpacity>
                             </View>
                         </View>
                     </View>
+
                     <View className="mx-4 mb-4">
                         <Text className="text-red-500 text-[13px] font-bold uppercase mb-2 ml-1">Account Details</Text>
                         <View className="rounded-xl border border-white bg-black">
@@ -88,6 +110,7 @@ export default function Profile() {
                             </View>
                         </View>
                     </View>
+
                     <View className="mx-4 mb-4">
                         <Text className="text-red-500 text-[13px] font-bold uppercase mb-2 ml-1">Actions</Text>
                         <View className="rounded-xl border border-white bg-black">

@@ -36,6 +36,7 @@ export default function ProductDetail() {
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [activeListing, setActiveListing] = useState(null);
 
     const fetchProduct = useCallback(async () => {
         try {
@@ -45,8 +46,23 @@ export default function ProductDetail() {
             const response = await api.get("/api/v1/getProductById", {
                 params: { id },
             });
-
             setProduct(response.data);
+
+            try {
+                const listingIdRes = await api.get("/api/v1/getActiveListingByProductId", {
+                    params: { productId: id },
+                });
+                if (listingIdRes.status === 200 && listingIdRes.data) {
+                    const detailRes = await api.get("/api/v1/getListingById", {
+                        params: { id: listingIdRes.data },
+                    });
+                    setActiveListing(detailRes.data);
+                } else {
+                    setActiveListing(null);
+                }
+            } catch (_) {
+                setActiveListing(null);
+            }
         } catch (err) {
             console.error("Failed to fetch product:", err);
             setError("Could not load product details. Please try again.");
@@ -90,9 +106,7 @@ export default function ProductDetail() {
                         className="ml-3 flex-row items-center bg-zinc-900 border border-white rounded-lg px-3 py-1.5"
                     >
                         <Ionicons name="pencil-outline" size={14} color="#ef4444" />
-                        <Text className="text-white text-[13px] font-semibold ml-1">
-                            Edit
-                        </Text>
+                        <Text className="text-white text-[13px] font-semibold ml-1">Edit</Text>
                     </TouchableOpacity>
                 )}
             </View>
@@ -106,13 +120,9 @@ export default function ProductDetail() {
             {error && !loading && (
                 <View className="mx-4 mt-3 p-3 bg-red-500/20 border border-red-500 rounded-xl flex-row items-center">
                     <Ionicons name="alert-circle-outline" size={18} color="#ef4444" />
-                    <Text className="text-red-400 text-[13px] ml-2 flex-1">
-                        {error}
-                    </Text>
+                    <Text className="text-red-400 text-[13px] ml-2 flex-1">{error}</Text>
                     <TouchableOpacity onPress={fetchProduct}>
-                        <Text className="text-white text-[12px] font-bold">
-                            Retry
-                        </Text>
+                        <Text className="text-white text-[12px] font-bold">Retry</Text>
                     </TouchableOpacity>
                 </View>
             )}
@@ -148,23 +158,50 @@ export default function ProductDetail() {
                         </View>
                     )}
 
-                    <TouchableOpacity
-                        onPress={() =>
-                            router.push({
-                                pathname: "/(listings)/addListings",
-                                params: {
-                                    productId: product.id,
-                                    productName: product.name,
-                                },
-                            })
-                        }
-                        className="mx-4 mt-6 bg-red-500 border border-white rounded-xl py-4 flex-row items-center justify-center"
-                    >
-                        <Ionicons name="storefront-outline" size={20} color="#fff" />
-                        <Text className="text-white text-[16px] font-extrabold ml-2">
-                            Sell This Item
-                        </Text>
-                    </TouchableOpacity>
+                    {activeListing ? (
+                        <TouchableOpacity
+                            onPress={() =>
+                                router.push({
+                                    pathname: "/(listings)/listingDetails",
+                                    params: { id: activeListing.id },
+                                })
+                            }
+                            className="mx-4 mt-6 bg-zinc-900 border border-white rounded-xl py-4 flex-row items-center px-4"
+                            activeOpacity={0.8}
+                        >
+                            <Ionicons name="storefront-outline" size={20} color="#ef4444" />
+                            <View className="ml-3 flex-1">
+                                <Text className="text-white text-[16px] font-extrabold">
+                                    Go to Listing
+                                </Text>
+                                <Text className="text-slate-400 text-[12px]">
+                                    {activeListing.isActive
+                                        ? `Listed for $${activeListing.price}`
+                                        : "Draft — hidden from store"}
+                                </Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={18} color="#ffffff40" />
+                        </TouchableOpacity>
+                    ) : (
+                        <TouchableOpacity
+                            onPress={() =>
+                                router.push({
+                                    pathname: "/(listings)/addListings",
+                                    params: {
+                                        productId: product.id,
+                                        productName: product.name,
+                                    },
+                                })
+                            }
+                            className="mx-4 mt-6 bg-red-500 border border-white rounded-xl py-4 flex-row items-center justify-center"
+                            activeOpacity={0.8}
+                        >
+                            <Ionicons name="storefront-outline" size={20} color="#fff" />
+                            <Text className="text-white text-[16px] font-extrabold ml-2">
+                                Sell This Item
+                            </Text>
+                        </TouchableOpacity>
+                    )}
                 </ScrollView>
             )}
         </SafeAreaView>
