@@ -5,6 +5,10 @@ import { useState, useEffect, useRef } from 'react';
 import { router } from "expo-router";
 import api from "../../src/services/api";
 
+function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 export default function Register() {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
@@ -32,6 +36,10 @@ export default function Register() {
     async function handleRegister() {
         if (!username || !email || !password || !password2) {
             ToastAndroid.show("Please fill in all fields!", ToastAndroid.SHORT);
+            return;
+        }
+        if (!isValidEmail(email)) {
+            ToastAndroid.show("Please enter a valid email address!", ToastAndroid.SHORT);
             return;
         }
         if (password !== password2) {

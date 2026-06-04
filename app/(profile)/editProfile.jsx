@@ -7,6 +7,10 @@ import { useState } from "react";
 import api from "../../src/services/api";
 import { router } from "expo-router";
 
+function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 export default function EditProfile() {
 
     const { user, updateUser } = useUser();
@@ -17,6 +21,10 @@ export default function EditProfile() {
     async function handleEditProfile() {
         if (!username || !email) {
             ToastAndroid.show("Username and email fields cannot be empty!", ToastAndroid.SHORT);
+            return;
+        }
+        if (!isValidEmail(email)) {
+            ToastAndroid.show("Please enter a valid email address!", ToastAndroid.SHORT);
             return;
         }
         try {
@@ -76,7 +84,6 @@ export default function EditProfile() {
                                     placeholder="Enter new email"
                                 />
                             </View>
-
                         </View>
                     </View>
                     <View className="mx-4 mb-4">
