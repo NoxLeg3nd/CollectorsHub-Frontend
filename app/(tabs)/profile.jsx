@@ -100,6 +100,11 @@ export default function Profile() {
                                     <Text className="text-slate-400 text-[12px]">Username</Text>
                                     <Text className="text-white text-[16px] font-semibold">{user?.username}</Text>
                                 </View>
+                                {user?.role === "ADMIN" && (
+                                    <View className="ml-auto bg-red-500/20 border border-red-500 rounded-full px-2 py-0.5">
+                                        <Text className="text-red-400 text-[10px] font-bold uppercase">Admin</Text>
+                                    </View>
+                                )}
                             </View>
                             <View className="flex-row items-center p-4">
                                 <Ionicons name="mail-outline" size={20} color="#ef4444" />
@@ -117,17 +122,27 @@ export default function Profile() {
                             <TouchableOpacity className="flex-row items-center p-4 border-b border-white" onPress={() => router.push("/(profile)/editProfile")}>
                                 <Ionicons name="create-outline" size={20} color="#ef4444" />
                                 <Text className="text-white text-[16px] ml-3">Edit Profile</Text>
-                                <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: 'auto' }} />
+                                <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: "auto" }} />
                             </TouchableOpacity>
                             <TouchableOpacity className="flex-row items-center p-4 border-b border-white" onPress={() => router.push("/(profile)/editPassword")}>
                                 <Ionicons name="lock-closed-outline" size={20} color="#ef4444" />
                                 <Text className="text-white text-[16px] ml-3">Change Password</Text>
-                                <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: 'auto' }} />
+                                <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: "auto" }} />
                             </TouchableOpacity>
+                            {user?.role === "ADMIN" && (
+                                <TouchableOpacity
+                                    className="flex-row items-center p-4 border-b border-white"
+                                    onPress={() => router.push("/(admin)/dashboard")}
+                                >
+                                    <Ionicons name="shield-checkmark-outline" size={20} color="#ef4444" />
+                                    <Text className="text-white text-[16px] ml-3">Admin Panel</Text>
+                                    <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: "auto" }} />
+                                </TouchableOpacity>
+                            )}
                             <TouchableOpacity className="flex-row items-center p-4" onPress={handleLogout}>
                                 <Ionicons name="log-out-outline" size={20} color="#ef4444" />
                                 <Text className="text-red-500 text-[16px] ml-3 font-semibold">Logout</Text>
-                                <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: 'auto' }} />
+                                <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: "auto" }} />
                             </TouchableOpacity>
                         </View>
                     </View>
