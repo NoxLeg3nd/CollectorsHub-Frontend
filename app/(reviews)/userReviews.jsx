@@ -15,7 +15,6 @@ import { useState, useCallback } from "react";
 import { useUser } from "../../src/context/UserContext";
 import api from "../../src/services/api";
 
-// opinion: 0 = Positive, 1 = Negative
 function OpinionBadge({ opinion }) {
     const isPositive = opinion === 0;
     return (
@@ -89,7 +88,6 @@ function ReviewCard({ review, currentUserId, targetUserId, onDelete, onEdit }) {
 
 export default function UserReviews() {
     const { user } = useUser();
-    // targetUserId = the user being reviewed (passed via router params)
     const { targetUserId, targetUsername } = useLocalSearchParams();
 
     const [reviews, setReviews] = useState([]);

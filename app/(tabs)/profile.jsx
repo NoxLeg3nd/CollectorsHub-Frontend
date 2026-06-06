@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, ImageBackground } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, ImageBackground, Alert, ToastAndroid } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
@@ -41,6 +41,33 @@ export default function Profile() {
     function handleLogout() {
         logout();
         router.replace("/(auth)/login");
+    }
+
+    function handleDeleteAccount() {
+        Alert.alert(
+            "Delete Account",
+            "Are you sure you want to delete your account? This will permanently remove all your products, listings, favourites and reviews. This action cannot be undone.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await api.delete("/api/v1/deleteUser", {
+                                params: { id: user.id },
+                            });
+                            ToastAndroid.show("Account deleted", ToastAndroid.SHORT);
+                            logout();
+                            router.replace("/(auth)/login");
+                        } catch (err) {
+                            console.error("Failed to delete account:", err);
+                            ToastAndroid.show("Failed to delete account", ToastAndroid.SHORT);
+                        }
+                    },
+                },
+            ]
+        );
     }
 
     return (
@@ -139,9 +166,14 @@ export default function Profile() {
                                     <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: "auto" }} />
                                 </TouchableOpacity>
                             )}
-                            <TouchableOpacity className="flex-row items-center p-4" onPress={handleLogout}>
+                            <TouchableOpacity className="flex-row items-center p-4 border-b border-white" onPress={handleLogout}>
                                 <Ionicons name="log-out-outline" size={20} color="#ef4444" />
                                 <Text className="text-red-500 text-[16px] ml-3 font-semibold">Logout</Text>
+                                <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: "auto" }} />
+                            </TouchableOpacity>
+                            <TouchableOpacity className="flex-row items-center p-4" onPress={handleDeleteAccount}>
+                                <Ionicons name="trash-outline" size={20} color="#ef4444" />
+                                <Text className="text-red-500 text-[16px] ml-3 font-semibold">Delete Account</Text>
                                 <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: "auto" }} />
                             </TouchableOpacity>
                         </View>

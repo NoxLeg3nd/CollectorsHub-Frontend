@@ -325,7 +325,6 @@ export default function Store() {
                 </TouchableOpacity>
             </View>
 
-            {/* Category chips */}
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}

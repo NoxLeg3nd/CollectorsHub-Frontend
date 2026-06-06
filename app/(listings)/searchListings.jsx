@@ -137,7 +137,6 @@ export default function SearchListings() {
         <SafeAreaView className="flex-1 bg-black">
             <StatusBar style="light" />
 
-            {/* Header */}
             <View className="flex-row items-center px-4 pt-2 pb-4 border-b border-white">
                 <TouchableOpacity
                     onPress={() => router.back()}
@@ -152,7 +151,6 @@ export default function SearchListings() {
                 </View>
             </View>
 
-            {/* Search bar */}
             <View className="mx-4 mt-4 mb-3 flex-row items-center bg-zinc-900 border border-white rounded-xl px-4">
                 <Ionicons name="search-outline" size={18} color="#ef4444" />
                 <TextInput
@@ -173,7 +171,6 @@ export default function SearchListings() {
                 )}
             </View>
 
-            {/* Search button */}
             <TouchableOpacity
                 onPress={handleSearch}
                 className="mx-4 mb-4 bg-red-500 border border-white rounded-xl py-3 flex-row items-center justify-center"
@@ -183,14 +180,12 @@ export default function SearchListings() {
                 <Text className="text-white text-[15px] font-bold ml-2">Search</Text>
             </TouchableOpacity>
 
-            {/* Loading */}
             {loading && (
                 <View className="flex-1 items-center justify-center">
                     <ActivityIndicator color="#ef4444" size="large" />
                 </View>
             )}
 
-            {/* No results */}
             {!loading && searched && results.length === 0 && (
                 <View className="flex-1 items-center justify-center px-8">
                     <Ionicons name="search-outline" size={56} color="#ffffff20" />
@@ -203,7 +198,6 @@ export default function SearchListings() {
                 </View>
             )}
 
-            {/* Initial state */}
             {!loading && !searched && (
                 <View className="flex-1 items-center justify-center px-8">
                     <Ionicons name="storefront-outline" size={56} color="#ffffff20" />
@@ -216,7 +210,6 @@ export default function SearchListings() {
                 </View>
             )}
 
-            {/* Results */}
             {!loading && results.length > 0 && (
                 <FlatList
                     key={listKey}

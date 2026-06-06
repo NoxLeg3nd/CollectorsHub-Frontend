@@ -11,6 +11,7 @@ import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, router, useFocusEffect } from "expo-router";
 import { useState, useCallback } from "react";
+import { useUser } from "../../src/context/UserContext";
 import api from "../../src/services/api";
 
 function DetailRow({ icon, label, value }) {
@@ -37,6 +38,7 @@ export default function ProductDetail() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeListing, setActiveListing] = useState(null);
+    const { user } = useUser();
 
     const fetchProduct = useCallback(async () => {
         try {
@@ -49,7 +51,7 @@ export default function ProductDetail() {
             setProduct(response.data);
 
             try {
-                const listingIdRes = await api.get("/api/v1/getActiveListingByProductId", {
+                const listingIdRes = await api.get("/api/v1/getActiveListingIdByProductId", {
                     params: { productId: id },
                 });
                 if (listingIdRes.status === 200 && listingIdRes.data) {
@@ -95,7 +97,7 @@ export default function ProductDetail() {
                     </Text>
                 </View>
 
-                {product && !loading && (
+                {product && !loading && user?.id === product.userId && (
                     <TouchableOpacity
                         onPress={() =>
                             router.push({
