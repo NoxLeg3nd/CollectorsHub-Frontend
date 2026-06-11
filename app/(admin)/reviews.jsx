@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState, useCallback, useRef } from "react";
 import { useFocusEffect, router } from "expo-router";
 import api from "../../src/services/api";
+import { useUser } from "../../src/context/UserContext";
 
 const PAGE_SIZE = 15;
 
@@ -22,10 +23,10 @@ function ReviewCard({ item, onDelete }) {
                     </View>
                     <View className="flex-1">
                         <Text className="text-white text-[13px] font-bold" numberOfLines={1}>
-                            {item.reviewingUsername ?? `User #${item.reviewingUserId}`}
+                            {item.reviewingUsername ?? "Unknown"} (#{item.reviewingUserId})
                         </Text>
                         <Text className="text-slate-500 text-[11px]">
-                            → reviewed User #{item.reviewedUserId}
+                            → reviewed {item.reviewedUsername ?? "Unknown"} (#{item.reviewedUserId})
                         </Text>
                     </View>
                 </View>
@@ -58,6 +59,7 @@ function ReviewCard({ item, onDelete }) {
 }
 
 export default function AdminReviews() {
+    const { user } = useUser();
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -69,7 +71,7 @@ export default function AdminReviews() {
         else setLoadingMore(true);
         try {
             const res = await api.get("/api/v1/admin/getAllReviews", {
-                params: { page: pageToFetch, size: PAGE_SIZE },
+                params: { requesterId: user?.id, page: pageToFetch, size: PAGE_SIZE },
             });
             const { content, last } = res.data;
             setReviews((prev) => {
@@ -106,7 +108,7 @@ export default function AdminReviews() {
                     text: "Remove", style: "destructive",
                     onPress: async () => {
                         try {
-                            await api.delete("/api/v1/admin/deleteReview", { params: { id: item.id } });
+                            await api.delete("/api/v1/admin/deleteReview", { params: { requesterId: user?.id, id: item.id } });
                             setReviews((prev) => prev.filter((r) => r.id !== item.id));
                         } catch (err) {
                             console.error("Delete review error:", err);

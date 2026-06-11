@@ -3,20 +3,19 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    ScrollView,
     ToastAndroid,
-    KeyboardAvoidingView,
     ActivityIndicator,
     Platform,
     Switch,
 } from "react-native";
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import api from "../../src/services/api";
-import {useUser} from "../../src/context/UserContext";
+import { useUser } from "../../src/context/UserContext";
 
 function FormField({ icon, label, children, noBorder }) {
     return (
@@ -79,10 +78,6 @@ export default function AddListing() {
             showToast("Please enter a contact method.");
             return;
         }
-        if (!description.trim()) {
-            showToast("Please add a description.");
-            return;
-        }
 
         try {
             setSaving(true);
@@ -90,8 +85,8 @@ export default function AddListing() {
                 productId: Number(productId),
                 price: parsedPrice,
                 contact: contact.trim(),
-                link: link.trim(),
-                description: description.trim(),
+                link: link.trim() || null,
+                description: description.trim() || null,
                 isActive,
                 userId: user.id,
             });
@@ -121,112 +116,103 @@ export default function AddListing() {
                     <Text className="text-red-500 text-[13px] font-bold uppercase">
                         New Listing
                     </Text>
-                    <Text
-                        className="text-white text-[22px] font-extrabold"
-                        numberOfLines={1}
-                    >
+                    <Text className="text-white text-[22px] font-extrabold" numberOfLines={1}>
                         {productName ?? "Sell Item"}
                     </Text>
                 </View>
             </View>
 
-            <KeyboardAvoidingView
-                className="flex-1"
-                behavior={Platform.OS === "ios" ? "padding" : undefined}
+            <KeyboardAwareScrollView
+                contentContainerStyle={{ paddingBottom: 48 }}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                enableOnAndroid={true}
+                extraScrollHeight={20}
             >
-                <ScrollView
-                    contentContainerStyle={{ paddingBottom: 48 }}
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                >
-                    <View className="mx-4 mt-4 bg-zinc-900 border border-white rounded-xl px-4 py-3 flex-row items-center">
-                        <Ionicons name="cube-outline" size={20} color="#ef4444" />
-                        <View className="ml-3">
-                            <Text className="text-slate-500 text-[11px] uppercase tracking-widest">
-                                Listing for
+                <View className="mx-4 mt-4 bg-black border border-white rounded-xl px-4 py-3 flex-row items-center">
+                    <Ionicons name="cube-outline" size={20} color="#ef4444" />
+                    <View className="ml-3">
+                        <Text className="text-slate-500 text-[11px] uppercase tracking-widest">
+                            Listing for
+                        </Text>
+                        <Text className="text-white text-[14px] font-semibold">
+                            {productName ?? `Product #${productId}`}
+                        </Text>
+                    </View>
+                </View>
+
+                <View className="mx-4 mt-4 bg-black border border-white rounded-xl overflow-hidden">
+                    <FormField icon="cash-outline" label="Asking Price (USD)">
+                        <FormInput
+                            value={price}
+                            onChangeText={setPrice}
+                            placeholder="e.g. 49.99"
+                            keyboardType="decimal-pad"
+                        />
+                    </FormField>
+
+                    <FormField icon="chatbubble-ellipses-outline" label="Contact (email or phone)">
+                        <FormInput
+                            value={contact}
+                            onChangeText={setContact}
+                            placeholder="e.g. seller@email.com or +40..."
+                            keyboardType="email-address"
+                        />
+                    </FormField>
+
+                    <FormField icon="link-outline" label="External Link (optional)">
+                        <FormInput
+                            value={link}
+                            onChangeText={setLink}
+                            placeholder="e.g. https://ebay.com/..."
+                            keyboardType="url"
+                        />
+                    </FormField>
+
+                    <FormField icon="document-text-outline" label="Description (optional)">
+                        <FormInput
+                            value={description}
+                            onChangeText={setDescription}
+                            placeholder="Describe the condition, included accessories, shipping details..."
+                            multiline
+                            style={{ minHeight: 100 }}
+                        />
+                    </FormField>
+
+                    <FormField icon="eye-outline" label="List as Active" noBorder>
+                        <View className="flex-row items-center justify-between">
+                            <Text className="text-slate-400 text-[13px]">
+                                {isActive ? "Visible in store immediately" : "Draft — hidden from store"}
                             </Text>
-                            <Text className="text-white text-[14px] font-semibold">
-                                {productName ?? `Product #${productId}`}
-                            </Text>
+                            <Switch
+                                value={isActive}
+                                onValueChange={setIsActive}
+                                trackColor={{ false: "#3f3f46", true: "#ef4444" }}
+                                thumbColor={isActive ? "#fff" : "#94a3b8"}
+                            />
                         </View>
-                    </View>
+                    </FormField>
+                </View>
 
-                    <View className="mx-4 mt-4 bg-zinc-900 border border-white rounded-xl overflow-hidden">
-
-                        <FormField icon="cash-outline" label="Asking Price (USD)">
-                            <FormInput
-                                value={price}
-                                onChangeText={setPrice}
-                                placeholder="e.g. 49.99"
-                                keyboardType="decimal-pad"
-                            />
-                        </FormField>
-
-                        <FormField icon="chatbubble-ellipses-outline" label="Contact (email or phone)">
-                            <FormInput
-                                value={contact}
-                                onChangeText={setContact}
-                                placeholder="e.g. seller@email.com or +40..."
-                                keyboardType="email-address"
-                            />
-                        </FormField>
-
-                        <FormField icon="link-outline" label="External Link (optional)">
-                            <FormInput
-                                value={link}
-                                onChangeText={setLink}
-                                placeholder="e.g. https://ebay.com/..."
-                                keyboardType="url"
-                            />
-                        </FormField>
-
-                        <FormField icon="document-text-outline" label="Description">
-                            <FormInput
-                                value={description}
-                                onChangeText={setDescription}
-                                placeholder="Describe the condition, included accessories, shipping details..."
-                                multiline
-                                style={{ minHeight: 100 }}
-                            />
-                        </FormField>
-
-                        <FormField icon="eye-outline" label="List as Active" noBorder>
-                            <View className="flex-row items-center justify-between">
-                                <Text className="text-slate-400 text-[13px]">
-                                    {isActive
-                                        ? "Visible in store immediately"
-                                        : "Draft — hidden from store"}
-                                </Text>
-                                <Switch
-                                    value={isActive}
-                                    onValueChange={setIsActive}
-                                    trackColor={{ false: "#3f3f46", true: "#ef4444" }}
-                                    thumbColor={isActive ? "#fff" : "#94a3b8"}
-                                />
-                            </View>
-                        </FormField>
-                    </View>
-
-                    <TouchableOpacity
-                        onPress={handleSubmit}
-                        disabled={saving}
-                        className="mx-4 mt-6 bg-red-500 border border-white rounded-xl py-4 flex-row items-center justify-center"
-                        activeOpacity={0.8}
-                        style={{ opacity: saving ? 0.6 : 1 }}
-                    >
-                        {saving ? (
-                            <ActivityIndicator color="#fff" size="small" />
-                        ) : (
-                            <>
-                                <Ionicons name="storefront-outline" size={20} color="#fff" />
-                                <Text className="text-white text-[16px] font-extrabold ml-2">
-                                    Publish Listing
-                                </Text>
-                            </>
-                        )}
-                    </TouchableOpacity>
-                </ScrollView>
-            </KeyboardAvoidingView>
+                <TouchableOpacity
+                    onPress={handleSubmit}
+                    disabled={saving}
+                    className="mx-4 mt-6 bg-red-500 border border-white rounded-xl py-4 flex-row items-center justify-center"
+                    activeOpacity={0.8}
+                    style={{ opacity: saving ? 0.6 : 1 }}
+                >
+                    {saving ? (
+                        <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                        <>
+                            <Ionicons name="storefront-outline" size={20} color="#fff" />
+                            <Text className="text-white text-[16px] font-extrabold ml-2">
+                                Publish Listing
+                            </Text>
+                        </>
+                    )}
+                </TouchableOpacity>
+            </KeyboardAwareScrollView>
         </SafeAreaView>
     );
 }

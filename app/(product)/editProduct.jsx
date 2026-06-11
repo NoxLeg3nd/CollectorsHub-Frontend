@@ -2,13 +2,12 @@ import {
     View,
     Text,
     TextInput,
-    ScrollView,
     TouchableOpacity,
     ActivityIndicator,
-    KeyboardAvoidingView,
     Platform,
     Image,
 } from "react-native";
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,31 +18,34 @@ import api from "../../src/services/api";
 import { uploadImageToCloudinary } from "../../src/services/cloudinary";
 import { CategoryPicker } from "../../src/components/categories";
 
-function InputField({ label, icon, value, onChangeText, placeholder, keyboardType = "default", multiline = false }) {
+function FormField({ icon, label, children, noBorder }) {
     return (
-        <View className="mx-4 mt-3">
-            <View className="flex-row items-center mb-1.5">
-                <Ionicons name={icon} size={13} color="#ef4444" />
-                <Text className="text-red-500 text-[13px] font-semibold ml-1 uppercase tracking-widest">
+        <View className={`p-4 ${noBorder ? "" : "border-b border-white"}`}>
+            <View className="flex-row items-center mb-2">
+                <Ionicons name={icon} size={16} color="#ef4444" />
+                <Text className="text-slate-400 text-[12px] ml-2 uppercase font-bold">
                     {label}
                 </Text>
             </View>
-            <TextInput
-                value={value}
-                onChangeText={onChangeText}
-                placeholder={placeholder}
-                placeholderTextColor="#52525b"
-                keyboardType={keyboardType}
-                multiline={multiline}
-                numberOfLines={multiline ? 4 : 1}
-                className="bg-zinc-900 border border-white rounded-xl px-4 text-white text-[13px]"
-                style={{
-                    paddingVertical: 12,
-                    textAlignVertical: multiline ? "top" : "center",
-                    minHeight: multiline ? 100 : undefined,
-                }}
-            />
+            {children}
         </View>
+    );
+}
+
+function FormInput({ value, onChangeText, placeholder, keyboardType, multiline, style }) {
+    return (
+        <TextInput
+            className="text-white text-[15px] border-b border-white pb-1"
+            value={value}
+            onChangeText={onChangeText}
+            placeholder={placeholder}
+            placeholderTextColor="#ffffff40"
+            autoCapitalize="none"
+            keyboardType={keyboardType ?? "default"}
+            multiline={multiline}
+            textAlignVertical={multiline ? "top" : "center"}
+            style={style}
+        />
     );
 }
 
@@ -132,8 +134,8 @@ export default function EditProduct() {
                 newProductCategory: category,
                 newProductCollection: collection.trim(),
                 newManufactureYear: manufactureYear ? parseInt(manufactureYear) : null,
-                newProductDescription: description.trim(),
-                newProductImage: image.trim(),
+                newProductDescription: description.trim() || null,
+                newProductImage: image.trim() || null,
             }, { params: { id } });
             router.back();
         } catch (err) {
@@ -159,52 +161,25 @@ export default function EditProduct() {
         }
     };
 
+    const isBusy = saving || uploading || deleting;
+
     return (
         <SafeAreaView className="flex-1 bg-black">
             <StatusBar style="light" />
 
             <View className="flex-row items-center px-4 pt-2 pb-4 border-b border-white">
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    className="mr-3"
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                    <Ionicons name="arrow-back" size={22} color="#fff" />
+                <TouchableOpacity onPress={() => router.back()} className="mr-3" disabled={isBusy}>
+                    <Ionicons name="arrow-back" size={22} color="#ef4444" />
                 </TouchableOpacity>
                 <View className="flex-1">
-                    <Text className="text-red-500 text-[13px] font-bold uppercase">Edit Item</Text>
+                    <Text className="text-red-500 text-[13px] font-bold uppercase">My Collection</Text>
                     <Text className="text-white text-[22px] font-extrabold" numberOfLines={1}>
-                        {name || "Loading..."}
+                        {name || "Edit Item"}
                     </Text>
                 </View>
-                <TouchableOpacity
-                    onPress={handleDelete}
-                    disabled={deleting}
-                    className="ml-2 flex-row items-center bg-zinc-900 border border-red-500 rounded-lg px-3 py-1.5"
-                >
-                    {deleting ? (
-                        <ActivityIndicator size="small" color="#ef4444" />
-                    ) : (
-                        <>
-                            <Ionicons name="trash-outline" size={14} color="#ef4444" />
-                            <Text className="text-red-500 text-[13px] font-semibold ml-1">Delete</Text>
-                        </>
-                    )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                    onPress={handleSave}
-                    disabled={saving || uploading}
-                    className="ml-2 flex-row items-center bg-red-500 border border-white rounded-lg px-3 py-1.5"
-                >
-                    {saving ? (
-                        <ActivityIndicator size="small" color="#fff" />
-                    ) : (
-                        <>
-                            <Ionicons name="checkmark-outline" size={14} color="#fff" />
-                            <Text className="text-white text-[13px] font-semibold ml-1">Save</Text>
-                        </>
-                    )}
-                </TouchableOpacity>
+                <View className="bg-zinc-900 border border-white rounded-full p-2">
+                    <Ionicons name="pencil-outline" size={22} color="#ef4444" />
+                </View>
             </View>
 
             {loading && (
@@ -224,116 +199,169 @@ export default function EditProduct() {
             )}
 
             {!loading && (
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
-                    className="flex-1"
+                <KeyboardAwareScrollView
+                    keyboardShouldPersistTaps="handled"
+                    enableOnAndroid={true}
+                    extraScrollHeight={20}
+                    contentContainerStyle={{ paddingBottom: 40 }}
                 >
-                    <ScrollView
-                        contentContainerStyle={{ paddingTop: 8, paddingBottom: 40 }}
-                        showsVerticalScrollIndicator={false}
-                        keyboardShouldPersistTaps="handled"
-                    >
-                        <InputField
-                            label="Name"
-                            icon="cube-outline"
-                            value={name}
-                            onChangeText={setName}
-                            placeholder="Product name"
-                        />
+                    <View className="mx-4 mt-6 mb-4">
+                        <Text className="text-red-500 text-[13px] font-bold uppercase mb-2 ml-1">
+                            Item Photo
+                        </Text>
 
-                        <View className="mx-4 mt-3">
-                            <View className="flex-row items-center mb-1.5">
-                                <Ionicons name="pricetag-outline" size={13} color="#ef4444" />
-                                <Text className="text-red-500 text-[13px] font-semibold ml-1 uppercase tracking-widest">
-                                    Category
-                                </Text>
+                        {(localImageUri || image) ? (
+                            <View className="rounded-xl overflow-hidden border border-white">
+                                <Image
+                                    source={{ uri: localImageUri ?? image }}
+                                    style={{ width: "100%", height: 200 }}
+                                    resizeMode="cover"
+                                />
+                                {uploading && (
+                                    <View style={{
+                                        position: "absolute", inset: 0,
+                                        backgroundColor: "rgba(0,0,0,0.65)",
+                                        alignItems: "center", justifyContent: "center",
+                                    }}>
+                                        <ActivityIndicator color="#ef4444" size="large" />
+                                        <Text className="text-white font-bold text-base mt-3">Uploading…</Text>
+                                    </View>
+                                )}
+                                {!uploading && (
+                                    <View className="absolute top-2 right-2 flex-row gap-2">
+                                        <TouchableOpacity
+                                            onPress={pickImage}
+                                            className="bg-black/70 border border-white rounded-full px-2 py-1 flex-row items-center"
+                                        >
+                                            <Ionicons name="refresh-outline" size={13} color="#fff" />
+                                            <Text className="text-white text-[11px] ml-1">Change</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity onPress={removeImage} className="bg-black/70 border border-white rounded-full p-1.5">
+                                            <Ionicons name="close" size={14} color="#fff" />
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
                             </View>
-                            <View className="bg-zinc-900 border border-white rounded-xl px-4 py-3">
+                        ) : (
+                            <TouchableOpacity
+                                onPress={pickImage}
+                                className="border border-dashed border-white rounded-xl items-center justify-center py-10"
+                                style={{ borderStyle: "dashed" }}
+                            >
+                                <Ionicons name="image-outline" size={44} color="#ef4444" />
+                                <Text className="text-white font-semibold text-[15px] mt-3">Choose from Gallery</Text>
+                                <Text className="text-slate-500 text-[12px] mt-1">JPG, PNG or WebP · Optional</Text>
+                            </TouchableOpacity>
+                        )}
+
+                        {(localImageUri || image) && !uploading && (
+                            <TouchableOpacity
+                                onPress={pickImage}
+                                className="mt-2 flex-row items-center justify-center py-2 border border-white rounded-xl"
+                            >
+                                <Ionicons name="refresh-outline" size={15} color="#ef4444" />
+                                <Text className="text-white text-[13px] ml-2">Change Photo</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+
+                    <View className="mx-4 mb-4">
+                        <Text className="text-red-500 text-[13px] font-bold uppercase mb-2 ml-1">
+                            Item Details
+                        </Text>
+                        <View className="rounded-xl border border-white bg-black overflow-hidden">
+                            <FormField icon="cube-outline" label="Name *">
+                                <FormInput
+                                    value={name}
+                                    onChangeText={setName}
+                                    placeholder="e.g. Charizard Holo 1st Edition"
+                                />
+                            </FormField>
+
+                            <FormField icon="pricetag-outline" label="Category *">
                                 <CategoryPicker value={category} onChange={setCategory} />
-                            </View>
+                            </FormField>
+
+                            <FormField icon="library-outline" label="Collection *">
+                                <FormInput
+                                    value={collection}
+                                    onChangeText={setCollection}
+                                    placeholder="e.g. Pokémon Base Set"
+                                />
+                            </FormField>
+
+                            <FormField icon="calendar-outline" label="Manufacture Year">
+                                <FormInput
+                                    value={manufactureYear}
+                                    onChangeText={setManufactureYear}
+                                    placeholder={`e.g. ${new Date().getFullYear()}`}
+                                    keyboardType="numeric"
+                                />
+                            </FormField>
+
+                            <FormField icon="document-text-outline" label="Description (optional)" noBorder>
+                                <FormInput
+                                    value={description}
+                                    onChangeText={setDescription}
+                                    placeholder="Describe your item…"
+                                    multiline
+                                    style={{ minHeight: 80 }}
+                                />
+                            </FormField>
                         </View>
+                    </View>
 
-                        <InputField
-                            label="Collection"
-                            icon="library-outline"
-                            value={collection}
-                            onChangeText={setCollection}
-                            placeholder="e.g. Summer 2024"
-                        />
-                        <InputField
-                            label="Manufacture Year"
-                            icon="calendar-outline"
-                            value={manufactureYear}
-                            onChangeText={setManufactureYear}
-                            placeholder="e.g. 2023"
-                            keyboardType="numeric"
-                        />
-
-                        <View className="mx-4 mt-3 mb-1">
-                            <View className="flex-row items-center mb-1.5">
-                                <Ionicons name="image-outline" size={13} color="#ef4444" />
-                                <Text className="text-red-500 text-[13px] font-semibold ml-1 uppercase tracking-widest">
-                                    Photo
+                    <View className="mx-4 mb-4">
+                        <Text className="text-red-500 text-[13px] font-bold uppercase mb-2 ml-1">Actions</Text>
+                        <View className="rounded-xl border border-white bg-black overflow-hidden">
+                            <TouchableOpacity
+                                className="flex-row items-center p-4 border-b border-white"
+                                onPress={handleSave}
+                                disabled={isBusy}
+                            >
+                                {saving ? (
+                                    <ActivityIndicator color="#ef4444" size={20} />
+                                ) : (
+                                    <Ionicons name="checkmark-circle-outline" size={20} color="#ef4444" />
+                                )}
+                                <Text className="text-white text-[16px] ml-3">
+                                    {saving ? "Saving…" : uploading ? "Waiting for upload…" : "Save Changes"}
                                 </Text>
-                            </View>
+                                {!isBusy && (
+                                    <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: "auto" }} />
+                                )}
+                            </TouchableOpacity>
 
-                            {(localImageUri || image) ? (
-                                <View className="rounded-xl overflow-hidden border border-white">
-                                    <Image
-                                        source={{ uri: localImageUri ?? image }}
-                                        style={{ width: "100%", height: 180 }}
-                                        resizeMode="cover"
-                                    />
-                                    {uploading && (
-                                        <View style={{
-                                            position: "absolute", inset: 0,
-                                            backgroundColor: "rgba(0,0,0,0.65)",
-                                            alignItems: "center", justifyContent: "center",
-                                        }}>
-                                            <ActivityIndicator color="#ef4444" size="large" />
-                                            <Text className="text-white font-bold text-base mt-3">Uploading…</Text>
-                                        </View>
-                                    )}
-                                    {!uploading && (
-                                        <View className="absolute top-2 right-2 flex-row" style={{ gap: 6 }}>
-                                            <TouchableOpacity
-                                                onPress={pickImage}
-                                                className="bg-black/70 border border-white rounded-full px-2 py-1 flex-row items-center"
-                                            >
-                                                <Ionicons name="refresh-outline" size={13} color="#fff" />
-                                                <Text className="text-white text-[11px] ml-1">Change</Text>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity
-                                                onPress={removeImage}
-                                                className="bg-black/70 border border-white rounded-full p-1.5"
-                                            >
-                                                <Ionicons name="close" size={13} color="#fff" />
-                                            </TouchableOpacity>
-                                        </View>
-                                    )}
-                                </View>
-                            ) : (
-                                <TouchableOpacity
-                                    onPress={pickImage}
-                                    className="border border-white rounded-xl items-center justify-center py-8 bg-zinc-900"
-                                >
-                                    <Ionicons name="image-outline" size={36} color="#ef4444" />
-                                    <Text className="text-white text-[13px] mt-2 font-semibold">Choose from Gallery</Text>
-                                    <Text className="text-slate-500 text-[11px] mt-1">Replace the current image</Text>
-                                </TouchableOpacity>
-                            )}
+                            <TouchableOpacity
+                                className="flex-row items-center p-4 border-b border-white"
+                                onPress={() => router.back()}
+                                disabled={isBusy}
+                            >
+                                <Ionicons name="close-circle-outline" size={20} color="#ef4444" />
+                                <Text className="text-red-500 text-[16px] ml-3 font-semibold">Cancel</Text>
+                                <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: "auto" }} />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                className="flex-row items-center p-4"
+                                onPress={handleDelete}
+                                disabled={isBusy}
+                            >
+                                {deleting ? (
+                                    <ActivityIndicator color="#ef4444" size={20} />
+                                ) : (
+                                    <Ionicons name="trash-outline" size={20} color="#ef4444" />
+                                )}
+                                <Text className="text-red-500 text-[16px] ml-3 font-semibold">
+                                    {deleting ? "Deleting…" : "Delete Product"}
+                                </Text>
+                                {!isBusy && (
+                                    <Ionicons name="chevron-forward" size={20} color="#ffffff40" style={{ marginLeft: "auto" }} />
+                                )}
+                            </TouchableOpacity>
                         </View>
-
-                        <InputField
-                            label="Description"
-                            icon="document-text-outline"
-                            value={description}
-                            onChangeText={setDescription}
-                            placeholder="Describe your item..."
-                            multiline
-                        />
-                    </ScrollView>
-                </KeyboardAvoidingView>
+                    </View>
+                </KeyboardAwareScrollView>
             )}
         </SafeAreaView>
     );

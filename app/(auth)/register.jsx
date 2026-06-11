@@ -1,4 +1,5 @@
-import { View, Text, TextInput, TouchableOpacity, ImageBackground, ToastAndroid, KeyboardAvoidingView, Animated, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ImageBackground, ToastAndroid, Animated } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useState, useEffect, useRef } from 'react';
@@ -62,86 +63,85 @@ export default function Register() {
     }
 
     return (
-        <ImageBackground source={require("../../assets/login.jpg")} resizeMode="cover" className="flex-1"
-                         style={{flex: 1}}>
+        <ImageBackground source={require("../../assets/login.jpg")} resizeMode="cover" className="flex-1" style={{ flex: 1 }}>
             <StatusBar style="light"/>
-            <KeyboardAvoidingView className="flex-1" behavior="padding" keyboardVerticalOffset={0}>
-                <SafeAreaView className="flex-1">
-                    <ScrollView contentContainerStyle={{flexGrow: 1}} keyboardShouldPersistTaps="handled">
-                        <View className="flex-1 px-6 justify-center items-center w-full py-10">
-                            <Animated.View
-                                style={{opacity: fadeAnim, transform: [{translateY: slideAnim}]}}
-                                className="px-6 justify-center w-full bg-black rounded-xl border border-white"
-                            >
-                                <Text className="text-[35px] font-bold text-center text-red-500 flex-wrap pt-5">
-                                    Join CollectorsHub!
-                                </Text>
-                                <Text className="text-center text-white m-5 font-bold text-[20px]">
-                                    Create your account below!
-                                </Text>
+            <SafeAreaView className="flex-1">
+                <KeyboardAwareScrollView
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    keyboardShouldPersistTaps="handled"
+                    enableOnAndroid={true}
+                    extraScrollHeight={20}
+                >
+                    <View className="flex-1 px-6 justify-center items-center w-full py-10">
+                        <Animated.View
+                            style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
+                            className="px-6 justify-center w-full bg-black rounded-xl border border-white"
+                        >
+                            <Text className="text-[35px] font-bold text-center text-red-500 flex-wrap pt-5">
+                                Join CollectorsHub!
+                            </Text>
+                            <Text className="text-center text-white m-5 font-bold text-[20px]">
+                                Create your account below!
+                            </Text>
 
-                                <View>
-                                    <Text className="text-left text-white font-thin mb-3">Username</Text>
-                                    <TextInput
-                                        className="border border-white rounded-xl px-4 py-3 mb-4 text-white"
-                                        autoCapitalize="none"
-                                        value={username}
-                                        onChangeText={setUsername}
-                                    />
-                                </View>
+                            <View>
+                                <Text className="text-left text-white font-thin mb-3">Username</Text>
+                                <TextInput
+                                    className="border border-white rounded-xl px-4 py-3 mb-4 text-white"
+                                    autoCapitalize="none"
+                                    value={username}
+                                    onChangeText={setUsername}
+                                />
+                            </View>
 
-                                <View>
-                                    <Text className="text-left text-white font-thin mb-3">Email</Text>
-                                    <TextInput
-                                        className="border border-white rounded-xl px-4 py-3 mb-4 text-white"
-                                        autoCapitalize="none"
-                                        keyboardType="email-address"
-                                        autoComplete="email"
-                                        value={email}
-                                        onChangeText={setEmail}
-                                    />
-                                </View>
+                            <View>
+                                <Text className="text-left text-white font-thin mb-3">Email</Text>
+                                <TextInput
+                                    className="border border-white rounded-xl px-4 py-3 mb-4 text-white"
+                                    autoCapitalize="none"
+                                    keyboardType="email-address"
+                                    autoComplete="email"
+                                    value={email}
+                                    onChangeText={setEmail}
+                                />
+                            </View>
 
-                                <View>
-                                    <Text className="text-left text-white font-thin mb-3">Password</Text>
-                                    <TextInput
-                                        className="border border-white rounded-xl px-4 py-3 mb-4 text-white"
-                                        autoCapitalize="none"
-                                        autoComplete="password-new"
-                                        value={password}
-                                        onChangeText={setPassword}
-                                        secureTextEntry
-                                    />
-                                </View>
+                            <View>
+                                <Text className="text-left text-white font-thin mb-3">Password</Text>
+                                <TextInput
+                                    className="border border-white rounded-xl px-4 py-3 mb-4 text-white"
+                                    autoCapitalize="none"
+                                    autoComplete="password-new"
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    secureTextEntry
+                                />
+                            </View>
 
-                                <View>
-                                    <Text className="text-left text-white font-thin mb-3">Confirm Password</Text>
-                                    <TextInput
-                                        className="border border-white rounded-xl px-4 py-3 mb-4 text-white"
-                                        autoCapitalize="none"
-                                        autoComplete="password-new"
-                                        value={password2}
-                                        onChangeText={setPassword2}
-                                        secureTextEntry
-                                    />
-                                </View>
+                            <View>
+                                <Text className="text-left text-white font-thin mb-3">Confirm Password</Text>
+                                <TextInput
+                                    className="border border-white rounded-xl px-4 py-3 mb-4 text-white"
+                                    autoCapitalize="none"
+                                    autoComplete="password-new"
+                                    value={password2}
+                                    onChangeText={setPassword2}
+                                    secureTextEntry
+                                />
+                            </View>
 
-                                <TouchableOpacity className="bg-red-500 rounded-xl py-3 px-4 items-center mb-3"
-                                                  onPress={handleRegister}>
-                                    <Text className="text-white font-bold text-base">Create Account</Text>
-                                </TouchableOpacity>
+                            <TouchableOpacity className="bg-red-500 rounded-xl py-3 px-4 items-center mb-3" onPress={handleRegister}>
+                                <Text className="text-white font-bold text-base">Create Account</Text>
+                            </TouchableOpacity>
 
-                                <TouchableOpacity className="items-center mb-5"
-                                                  onPress={() => router.replace("/(auth)/login")}>
-                                    <Text className="text-white font-thin text-base">Already have an account?</Text>
-                                    <Text className="text-blue-500 font-bold text-base">Sign in here!</Text>
-                                </TouchableOpacity>
-
-                            </Animated.View>
-                        </View>
-                    </ScrollView>
-                </SafeAreaView>
-            </KeyboardAvoidingView>
+                            <TouchableOpacity className="items-center mb-5" onPress={() => router.replace("/(auth)/login")}>
+                                <Text className="text-white font-thin text-base">Already have an account?</Text>
+                                <Text className="text-blue-500 font-bold text-base">Sign in here!</Text>
+                            </TouchableOpacity>
+                        </Animated.View>
+                    </View>
+                </KeyboardAwareScrollView>
+            </SafeAreaView>
         </ImageBackground>
     );
 }
