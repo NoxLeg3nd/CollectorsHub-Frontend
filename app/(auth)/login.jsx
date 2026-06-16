@@ -40,7 +40,7 @@ export default function Login({ navigation }) {
             ToastAndroid.show("Welcome to the app!", ToastAndroid.SHORT);
             router.replace("/(tabs)/home");
         } catch (error) {
-            console.log("Error:", error);
+            console.log("Login failed:", error?.response?.status);
             ToastAndroid.show("Username or password is wrong!", ToastAndroid.SHORT);
         }
     }

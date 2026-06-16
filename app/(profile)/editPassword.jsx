@@ -40,7 +40,7 @@ export default function EditPassword() {
             ToastAndroid.show("Password updated!", ToastAndroid.SHORT);
             router.back();
         } catch (error) {
-            console.log(error);
+            console.log("Password change failed:", error?.response?.status);
             ToastAndroid.show("Current password is incorrect!", ToastAndroid.SHORT);
         }
     }

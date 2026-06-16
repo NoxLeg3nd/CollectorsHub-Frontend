@@ -57,7 +57,7 @@ export default function Register() {
                 password: password,
                 email: email,
             });
-            console.log("Success!", response.data);
+            console.log("Registration successful");
             ToastAndroid.show("Account created! Now login!", ToastAndroid.SHORT);
             router.replace("/(auth)/login");
         } catch (error) {
