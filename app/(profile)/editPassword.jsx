@@ -20,6 +20,10 @@ export default function EditPassword() {
             ToastAndroid.show("Password fields cannot be empty!", ToastAndroid.SHORT);
             return;
         }
+        if (newPassword.length < 8) {
+            ToastAndroid.show("Password must be at least 8 characters!", ToastAndroid.SHORT);
+            return;
+        }
         if (newPassword === currentPassword) {
             ToastAndroid.show("Passwords must be different!", ToastAndroid.SHORT);
             return;

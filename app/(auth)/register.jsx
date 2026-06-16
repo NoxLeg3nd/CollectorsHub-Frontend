@@ -39,6 +39,10 @@ export default function Register() {
             ToastAndroid.show("Please fill in all fields!", ToastAndroid.SHORT);
             return;
         }
+        if (password.length < 8) {
+            ToastAndroid.show("Password must be at least 8 characters!", ToastAndroid.SHORT);
+            return;
+        }
         if (!isValidEmail(email)) {
             ToastAndroid.show("Please enter a valid email address!", ToastAndroid.SHORT);
             return;
